@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="EPK oficial de YSHDD, artista cristiano de rap, trap y hip hop con un mensaje de fe y propósito">
+    <meta name="keywords" content="YSHDD, rap cristiano, trap cristiano, música cristiana, hip hop cristiano, Colombia">
+    <meta name="author" content="YSHDD">
+    
+    <title>YSHDD | Oficial - Música con Propósito</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="YSHDD.jpeg" sizes="any">
+    <link rel="manifest" href="site.webmanifest">
+    
+    <!-- Preconexiones y precarga -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://www.youtube.com">
+    
+    <!-- Precarga de recursos críticos -->
+    <link rel="preload" href="main.css" as="style">
+    <link rel="preload" href="main.js" as="script">
+    <link rel="preload" href="fonts/Montserrat.woff2" as="font" type="font/woff2" crossorigin>
+    
+    <!-- Fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Oswald:wght@500&display=swap" rel="stylesheet">
+    
+    <!-- Box Icons -->
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="main.css" media="print" onload="this.media='all'">
+    
+    <!-- Scripts de carga diferida -->
+    <noscript>
+        <link rel="stylesheet" href="main.css">
+    </noscript>
+</head>
+<body>
+    <!-- Loader -->
+    <div class="loader" aria-hidden="true">
+        <div class="loader-logo">YSHDD</div>
+        <div class="loader-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <!-- Header -->
+    <header id="header">
+        <a href="#inicio" class="logo" id="logo">YSHDD</a>
+        <nav id="nav" aria-label="Navegación principal">
+            <button id="menu-toggle" aria-label="Menú" aria-expanded="false" aria-controls="menu" class="menu-btn"><i class='bx bx-menu'></i></button>
+            <ul id="menu">
+                <li style="--i:0"><a href="#inicio" class="nav-link active"><i class='bx bx-home'></i> Inicio</a></li>
+                <li style="--i:1"><a href="#bio" class="nav-link"><i class='bx bx-user'></i> Biografía</a></li>
+                <li style="--i:2"><a href="#musica" class="nav-link"><i class='bx bx-music'></i> Música</a></li>
+                <li style="--i:3"><a href="#videos" class="nav-link"><i class='bx bx-video'></i> Videos</a></li>
+                <li style="--i:4"><a href="#galeria" class="nav-link"><i class='bx bx-photo-album'></i> Galería</a></li>
+                <li style="--i:5"><a href="#contacto" class="nav-link"><i class='bx bx-envelope'></i> Contacto</a></li>
+                <li style="--i:6"><a href="#redes" class="nav-link"><i class='bx bx-share-alt'></i> Redes</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Sección Inicio -->
+        <section id="inicio" class="section hero">
+            <video autoplay muted loop id="video-fondo" class="hero-video" aria-hidden="true" playsinline>
+                <source src="YSHDD.mp4" type="video/mp4">
+                <source src="YSHDD.webm" type="video/webm">
+                Tu navegador no soporta videos HTML5.
+            </video>
+            <div class="hero-content">
+                <h1 class="hero-title scroll-reveal">YSHDD <span class="highlight">— Música con Propósito</span></h1>
+                <p class="hero-subtitle scroll-reveal" style="display: none;">Rap | Trap | Hip Hop | Drill | Corrido Tumbado | (en base Cristiano)</p>
+                <a href="#musica" class="cta-button scroll-reveal">Escucha mi música <i class='bx bx-right-arrow-alt'></i></a>
+            </div>
+        </section>
+
+        <!-- Sección Biografía -->
+        <section id="bio" class="section">
+            <div class="container">
+                <h2 class="section-title scroll-reveal">Biografía</h2>
+                <div class="bio-container">
+                    <div class="bio-img-container scroll-reveal">
+                        <picture>
+                            <img src="YSHDD.jpeg" alt="YSHDD" class="bio-img" loading="lazy">
+                        </picture>
+                    </div>
+                    <div class="bio-content scroll-reveal">
+                        <div class="bio-info">
+                            <p><i class='bx bx-user'></i> <strong>Nombre Artístico:</strong> YSHDD</p>
+                            <p><i class='bx bx-user'></i> <strong>Nombre real:</strong> Luis Esteban Potosí Venté</p>
+                            <p><i class='bx bx-calendar'></i> <strong>Fecha de nacimiento:</strong> 30 de Mayo del 2005</p>
+                            <p><i class='bx bx-time-five'></i> <strong>Edad:</strong> 20 años</p>
+                            <p><i class='bx bx-map'></i> <strong>Ciudad/País:</strong> Cali, Colombia</p>
+                            <p><i class='bx bx-music'></i> <strong>Géneros musicales:</strong> Rap, Trap, Hip Hop, Drill y Corrido Tumbado | (en base Cristiano)</p>
+                        </div>
+                        <div class="bio-text">
+                            <p>YSHDD es un artista cristiano colombiano que fusiona los géneros urbanos con mensajes de fe y esperanza. Desde muy joven mostró interés por la música, comenzando a escribir sus primeras letras a los 15 años.</p>
+                            <p>Su estilo único combina el flow característico del trap y el drill con letras que reflejan su caminar espiritual, creando un sonido fresco dentro de la música cristiana contemporánea.</p>
+                            <div id="more-bio">
+                                <p>Nacido en Colombia en 2005, YSHDD descubrió su pasión por la música urbana mientras experimentaba una transformación personal en su fe. Su arte representa la lucha entre lo secular y lo espiritual, mostrando autenticidad en cada composición.</p>
+                                <p>En 2025 lanzó su primer álbum "CRISIS", un proyecto conceptual que explora temas de identidad, propósito y redención a través de 5 poderosas canciones. Su single "¿Quién Soy?" se convirtió rápidamente en un himno para jóvenes cristianos que buscan su lugar en el mundo.</p>
+                                <p>YSHDD se ha presentado en diversos eventos juveniles y festivales cristianos, llevando un mensaje de esperanza a través de ritmos contemporáneos. Su meta es crear música que inspire a las nuevas generaciones a vivir su fe con pasión y autenticidad.</p>
+                            </div>
+                            <button id="toggle-bio" class="read-more-btn" aria-expanded="false" aria-controls="more-bio">Leer más <i class='bx bx-chevron-down'></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Marquee Infinito -->
+        <div class="marquee-container" aria-hidden="true">
+            <div class="marquee-content">
+                <div class="marquee-item"><i class='bx bxs-star'></i> PRÓXIMO LANZAMIENTO "Mala Mía" ¡SE ESTRENARÁ!</div>
+                <div class="marquee-item"><i class='bx bxs-music'></i> ESCUCHA "¿Quien Soy?" EN TODAS LAS PLATAFORMAS</div>
+                <div class="marquee-item"><i class='bx bxs-calendar'></i> SUSCRÍBETE PARA NO PERDERTE NADA</div>
+            </div>
+        </div>
+
+        <!-- Sección Música -->
+        <section id="musica" class="section dark">
+            <div class="container">
+                <h2 class="section-title scroll-reveal">Discografía</h2>
+                <div class="albumes">
+                    <article class="album scroll-reveal">
+                        <picture>
+                            
+                            <img src="crisis.png" alt="Álbum CRISIS" class="album-cover" loading="lazy">
+                        </picture>
+                        <div class="album-info">
+                            <h3 class="album-title">CRISIS</h3>
+                            <p class="album-year"><i class='bx bx-calendar'></i> 2025</p>
+                            <p class="album-tracks"><i class='bx bx-disc'></i> 5 canciones</p>
+                            <a href="https://youtu.be/naMGlK1ozFc?si=t3IoysSoWglxeJjm" class="stream-button" target="_blank" rel="noopener noreferrer"><i class='bx bx-play'></i> Escuchar en YouTube</a>
+                        </div>
+                    </article>
+                    <article class="album scroll-reveal">
+                        <picture>
+                            
+                            <img src="quiensoy.png" alt="Single ¿Quién Soy?" class="album-cover" loading="lazy">
+                        </picture>
+                        <div class="album-info">
+                            <h3 class="album-title">¿Quién Soy?</h3>
+                            <p class="album-year"><i class='bx bx-calendar'></i> 2024</p>
+                            <p class="album-tracks"><i class='bx bx-music'></i> Single</p>
+                            <a href="https://open.spotify.com/track/7wIe6a0X8eRAP6B7SfeHJJ?si=nKj82O6AT4qUD1J71tamLA" class="stream-button" target="_blank" rel="noopener noreferrer"><i class='bx bx-play'></i> Escuchar</a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección Videos -->
+        <section id="videos" class="section" style="display: none;">
+            <div class="container">
+                <h2 class="section-title scroll-reveal">Videos</h2>
+                <div class="video-gallery">
+                    <article class="video-item scroll-reveal">
+                        <div class="video-thumbnail" data-video="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" aria-label="Ver video ¿Quién Soy?">
+                            <picture>
+                                <source srcset="img/videos/quien-soy-thumb.webp" type="image/webp">
+                                <source srcset="img/videos/quien-soy-thumb.jpg" type="image/jpeg">
+                                <img src="img/videos/quien-soy-thumb.jpg" alt="Miniatura del video ¿Quién Soy?" loading="lazy">
+                            </picture>
+                            <div class="play-icon" aria-hidden="true"><i class='bx bx-play'></i></div>
+                        </div>
+                        <h3><i class='bx bxl-youtube'></i> ¿Quién Soy? - Video Oficial</h3>
+                    </article>
+                    <article class="video-item scroll-reveal">
+                        <div class="video-thumbnail" data-video="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" aria-label="Ver video CRISIS">
+                            <picture>
+                                <source srcset="img/videos/crisis-thumb.webp" type="image/webp">
+                                <source srcset="img/videos/crisis-thumb.jpg" type="image/jpeg">
+                                <img src="img/videos/crisis-thumb.jpg" alt="Miniatura del video CRISIS" loading="lazy">
+                            </picture>
+                            <div class="play-icon" aria-hidden="true"><i class='bx bx-play'></i></div>
+                        </div>
+                        <h3><i class='bx bxl-youtube'></i> CRISIS - Visualizer</h3>
+                    </article>
+                    <article class="video-item scroll-reveal">
+                        <div class="video-thumbnail" data-video="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" aria-label="Ver entrevista">
+                            <picture>
+                                <source srcset="img/videos/entrevista-thumb.webp" type="image/webp">
+                                <source srcset="img/videos/entrevista-thumb.jpg" type="image/jpeg">
+                                <img src="img/videos/entrevista-thumb.jpg" alt="Miniatura de entrevista con YSHDD" loading="lazy">
+                            </picture>
+                            <div class="play-icon" aria-hidden="true"><i class='bx bx-play'></i></div>
+                        </div>
+                        <h3><i class='bx bxl-youtube'></i> Entrevista Exclusiva</h3>
+                    </article>
+                </div>
+                
+                <!-- Modal de Video -->
+                <div id="video-modal" class="video-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal-title">
+                    <div class="modal-content">
+                        <button class="close-modal" aria-label="Cerrar modal"><i class='bx bx-x'></i></button>
+                        <div class="video-frame">
+                            <iframe id="video-iframe" title="Reproductor de video" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección Galería -->
+        <section id="galeria" class="section dark" style="display: none;">
+            <div class="container">
+                <h2 class="section-title scroll-reveal">Galería</h2>
+                <div class="photo-gallery">
+                    <figure class="gallery-item scroll-reveal">
+                        <picture>
+                            <source srcset="img/gallery/concierto.webp" type="image/webp">
+                            <source srcset="img/gallery/concierto.jpg" type="image/jpeg">
+                            <img src="img/gallery/concierto.jpg" alt="YSHDD en concierto" loading="lazy">
+                        </picture>
+                        <a href="img/gallery/concierto.jpg" download="YSHDD-concierto.jpg" class="download-btn"><i class='bx bx-download'></i> Descargar</a>
+                    </figure>
+                    <figure class="gallery-item scroll-reveal">
+                        <picture>
+                            <source srcset="img/gallery/estudio.webp" type="image/webp">
+                            <source srcset="img/gallery/estudio.jpg" type="image/jpeg">
+                            <img src="img/gallery/estudio.jpg" alt="YSHDD en el estudio" loading="lazy">
+                        </picture>
+                        <a href="img/gallery/estudio.jpg" download="YSHDD-estudio.jpg" class="download-btn"><i class='bx bx-download'></i> Descargar</a>
+                    </figure>
+                    <figure class="gallery-item scroll-reveal">
+                        <picture>
+                            <source srcset="img/gallery/fotos.webp" type="image/webp">
+                            <source srcset="img/gallery/fotos.jpg" type="image/jpeg">
+                            <img src="img/gallery/fotos.jpg" alt="YSHDD sesión de fotos" loading="lazy">
+                        </picture>
+                        <a href="img/gallery/fotos.jpg" download="YSHDD-fotos.jpg" class="download-btn"><i class='bx bx-download'></i> Descargar</a>
+                    </figure>
+                    <figure class="gallery-item scroll-reveal">
+                        <picture>
+                            <source srcset="img/gallery/vivo.webp" type="image/webp">
+                            <source srcset="img/gallery/vivo.jpg" type="image/jpeg">
+                            <img src="img/gallery/vivo.jpg" alt="YSHDD en vivo" loading="lazy">
+                        </picture>
+                        <a href="img/gallery/vivo.jpg" download="YSHDD-vivo.jpg" class="download-btn"><i class='bx bx-download'></i> Descargar</a>
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección Contacto -->
+        <section id="contacto" class="section" >
+            <div class="container">
+                <h2 class="section-title scroll-reveal">Contacto / Booking</h2>
+                <div class="contact-container">
+                    <form id="contact-form" class="contact-form scroll-reveal" novalidate>
+                        <div class="form-group">
+                            <label for="name"><i class='bx bx-user'></i> Nombre</label>
+                            <input type="text" id="name" name="name" required placeholder="Tu nombre completo" aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="email"><i class='bx bx-envelope'></i> Email</label>
+                            <input type="email" id="email" name="email" required placeholder="tu@email.com" aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="subject"><i class='bx bx-edit'></i> Asunto</label>
+                            <input type="text" id="subject" name="subject" required placeholder="Motivo de tu mensaje" aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="message"><i class='bx bx-message-dots'></i> Mensaje</label>
+                            <textarea id="message" name="message" rows="5" required placeholder="Escribe tu mensaje aquí..." aria-required="true"></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn"><i class='bx bx-paper-plane'></i> Enviar Mensaje</button>
+                    </form>
+                    <div class="contact-info scroll-reveal" style="display: none;">
+                        <h3><i class='bx bx-phone-call'></i> Contacto directo</h3>
+                        <div class="contact-details">
+                            <p><i class='bx bx-envelope'></i> <strong>Email:</strong> <a href="mailto:yshddoficial@gmail.com">yshddoficial@gmail.com</a></p>
+                            <p><i class='bx bxl-whatsapp'></i> <strong>WhatsApp:</strong> <a href="https://wa.me/571234567890">+57 123 456 7890</a></p>
+                            <p><i class='bx bx-briefcase'></i> <strong>Manager:</strong> <a href="mailto:manager@yshdd.com">manager@yshdd.com</a></p>
+                            <p><i class='bx bx-calendar-event'></i> <strong>Booking:</strong> <a href="mailto:booking@yshdd.com">booking@yshdd.com</a></p>
+                        </div>
+                        <div class="social-links">
+                            <a href="https://instagram.com/yshdd" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class='bx bxl-instagram'></i></a>
+                            <a href="https://tiktok.com/@yshdd" target="_blank" rel="noopener noreferrer" aria-label="TikTok"><i class='bx bxl-tiktok'></i></a>
+                            <a href="https://facebook.com/yshdd" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class='bx bxl-facebook'></i></a>
+                            <a href="https://twitter.com/yshdd" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class='bx bxl-twitter'></i></a>
+                            <a href="https://youtube.com/yshdd" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class='bx bxl-youtube'></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección Redes y Streaming -->
+        <section id="redes" class="section dark">
+            <div class="container">
+                <h2 class="section-title scroll-reveal">Encuéntrame en</h2>
+                <div class="streaming-platforms">
+                    <a href="https://youtube.com/@yshdd" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bxl-youtube'></i>
+                        <span>YouTube</span>
+                    </a>
+                    <a href="https://open.spotify.com/artist/43tSpIfMASioBV4PmbyymH?si=-CJE-NsJTWSVG5EvkiuLtg" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bxl-spotify'></i>
+                        <span>Spotify</span>
+                    </a>
+                    <a href="https://music.apple.com/artist/yshdd" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bxl-apple'></i>
+                        <span>Apple Music</span>
+                    </a>
+                    <a href="https://instagram.com/yshddoficial" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bxl-instagram'></i>
+                        <span>Instagram</span>
+                    </a>
+                    <a href="https://tiktok.com/@yshddoficial" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bxl-tiktok'></i>
+                        <span>TikTok</span>
+                    </a>
+                    <a href="https://soundcloud.com/yshdd" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bxl-soundcloud'></i>
+                        <span>SoundCloud</span>
+                    </a>
+                    <a href="https://audiomack.com/yshdd" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bx-music'></i>
+                        <span>Audiomack</span>
+                    </a>
+                    <a href="https://music.amazon.com/artists/yshdd" target="_blank" rel="noopener noreferrer" class="platform scroll-reveal">
+                        <i class='bx bxl-amazon'></i>
+                        <span>Amazon Music</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <a href="#inicio" class="footer-logo">YSHDD</a>
+            <nav class="footer-links" aria-label="Navegación secundaria">
+                <a href="#inicio"><i class='bx bx-home'></i> Inicio</a>
+                <a href="#bio"><i class='bx bx-user'></i> Biografía</a>
+                <a href="#musica"><i class='bx bx-music'></i> Música</a>
+                <a href="#videos"><i class='bx bx-video'></i> Videos</a>
+                <a href="#contacto"><i class='bx bx-envelope'></i> Contacto</a>
+                <a href="privacy.html"><i class='bx bx-shield'></i> Política de Privacidad</a>
+            </nav>
+            <p class="copyright"><i class='bx bx-copyright'></i> 2025 YSHDD. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Botón Volver Arriba -->
+    <button class="back-to-top" aria-label="Volver arriba">
+        <i class='bx bx-up-arrow-alt'></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="main.js" type="module" defer></script>
+    <script src="script.js" defer></script>
+    <script src="notificacion.js" defer></script>
+    <script src="actualizacion.js" defer></script>
+    <script src="Email.js" defer></script>
+    <script src="sw.js" defer></script>
+</body>
+</html>
