@@ -366,6 +366,31 @@
     <script src="actualizacion.js" defer></script>
     <script src="seguridad.js" defer></script>
     <script src="Email.js" defer></script>
-    <script src="sw.js" defer></script>
+    <script>
+// Registro y manejo del Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(registration) {
+        console.log('SW registered: ', registration);
+        
+        // Verificar actualizaciones periódicamente
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000); // Cada hora
+      })
+      .catch(function(registrationError) {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+  
+  // Manejar mensajes del Service Worker
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data.type === 'UPDATE_AVAILABLE') {
+      showUpdateNotification();
+    }
+  });
+}
+</script>
 </body>
 </html>
