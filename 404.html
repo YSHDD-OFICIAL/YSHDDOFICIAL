@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página no encontrada - YSHDD</title>
+    <style>
+        :root {
+            --color-primario: #ffdd57;
+            --color-secundario: #222;
+            --color-fondo: #111;
+            --color-texto: #ffffff;
+            --color-texto-secundario: rgba(255, 255, 255, 0.8);
+            --fuente-principal: 'Montserrat', sans-serif;
+            --fuente-titulos: 'Playfair Display', serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--fuente-principal);
+            background: var(--color-fondo);
+            color: var(--color-texto);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            background-image: linear-gradient(135deg, #111, #1a1a2e);
+        }
+        
+        .container {
+            max-width: 600px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .logo {
+            font-family: var(--fuente-titulos);
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ffdd57, #e94560);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        h1 {
+            font-family: var(--fuente-titulos);
+            color: var(--color-primario);
+            margin-bottom: 15px;
+            font-size: 2rem;
+        }
+        
+        p {
+            color: var(--color-texto-secundario);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .error-code {
+            font-size: 6rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ffdd57, #e94560);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(90deg, #ffdd57, #e94560);
+            color: var(--color-secundario);
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--color-primario);
+            color: var(--color-primario);
+        }
+        
+        .navigation {
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            .error-code {
+                font-size: 4rem;
+            }
+            
+            .btn {
+                display: block;
+                margin: 10px auto;
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">YSHDD</div>
+        <div class="error-code">404</div>
+        <h1>Página no encontrada</h1>
+        <p>Lo sentimos, la página que estás buscando no existe o ha sido movida.</p>
+        <p>Puedes regresar al inicio o explorar otras secciones de nuestro sitio.</p>
+        
+        <div class="navigation">
+            <a href="index.html" class="btn">Volver al Inicio</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">Volver Atrás</a>
+        </div>
+    </div>
+</body>
+</html>
