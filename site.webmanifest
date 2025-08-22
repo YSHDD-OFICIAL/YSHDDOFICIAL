@@ -1,0 +1,54 @@
+{
+  "name": "YSHDD",
+  "short_name": "YSHDD",
+  "description": "EPK oficial de YSHDD, artista cristiano de rap, trap y hip hop con un mensaje de fe y propósito",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#ffdd57",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "img/icons/icon-72x72.webp",
+      "sizes": "72x72",
+      "type": "image/webp"
+    },
+    {
+      "src": "img/icons/icon-96x96.webp",
+      "sizes": "96x96",
+      "type": "image/webp"
+    },
+    {
+      "src": "img/icons/icon-128x128.webp",
+      "sizes": "128x128",
+      "type": "image/webp"
+    },
+    {
+      "src": "img/icons/icon-144x144.webp",
+      "sizes": "144x144",
+      "type": "image/webp"
+    },
+    {
+      "src": "img/icons/icon-152x152.webp",
+      "sizes": "152x152",
+      "type": "image/webp"
+    },
+    {
+      "src": "img/icons/icon-192x192.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "img/icons/icon-384x384.webp",
+      "sizes": "384x384",
+      "type": "image/webp"
+    },
+    {
+      "src": "img/icons/icon-512x512.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ],
+  "categories": ["music", "entertainment"],
+  "lang": "es"
+}
