@@ -1,2 +1,2 @@
-# YSHDDOFICIAL
+# YSHDD
 Artista, Compositor y Letrista
