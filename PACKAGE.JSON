@@ -1,0 +1,49 @@
+{
+  "name": "yshdd-epk",
+  "version": "2.6.0",
+  "description": "Electronic Press Kit profesional para YSHDD",
+  "main": "./main.js",
+  "scripts": {
+    "dev": "live-server . --port=3000 --no-browser",
+    "build": "npm run clean && npm run build:css && npm run build:js && npm run optimize",
+    "build:css": "postcss main.css -o dist/main.min.css --env production",
+    "build:js": "esbuild assets/js/main.js --bundle --minify --sourcemap --outfile=dist/main.min.js",
+    "optimize": "npm run optimize:images && npm run generate:manifest",
+    "optimize:images": "sharp -i assets/images/**/*.{jpg,png} -o dist/images -q 80 --format=webp",
+    "generate:manifest": "node scripts/generate-manifest.js",
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "eslint assets/js/**/*.js",
+    "lint:css": "stylelint **/*.css",
+    "test": "npm run lint && npm run test:performance",
+    "test:performance": "lighthouse https://localhost:3000 --view",
+    "deploy": "npm run build && npm run deploy:ftp",
+    "deploy:ftp": "node scripts/deploy.js",
+    "clean": "rm -rf dist/*",
+    "preview": "serve dist -p 3000"
+  },
+  "dependencies": {
+    "tippy.js": "^6.3.7",
+    "particles.js": "^2.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.0",
+    "postcss": "^8.4.31",
+    "postcss-preset-env": "^9.1.0",
+    "cssnano": "^6.0.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.53.0",
+    "stylelint": "^15.11.0",
+    "live-server": "^1.2.2",
+    "sharp": "^0.33.0",
+    "lighthouse": "^11.0.0",
+    "serve": "^14.2.1"
+  },
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "not dead",
+    "not IE 11"
+  ],
+  "author": "YSHDD",
+  "license": "Proprietary"
+}
