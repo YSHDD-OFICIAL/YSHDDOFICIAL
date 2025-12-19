@@ -1,16 +1,16 @@
 // assets/js/main.js
-import { CONFIG } from './modules/config.js';
-import { Player } from './modules/player.js';
-import { Analytics } from './modules/analytics.js';
-import { EmailService } from './modules/email.js';
-import { PressKit } from './modules/presskit.js';
-import { TourManager } from './modules/tour.js';
-import { Collaborations } from './modules/collaborations.js';
-import { Sessions } from './modules/sessions.js';
-import { Notifications } from './modules/notifications.js';
-import { Security } from './utils/security.js';
-import { Performance } from './utils/performance.js';
-import { Validation } from './utils/validation.js';
+import { CONFIG } from './config.js';
+import { Player } from './player.js';
+import { Analytics } from './analytics.js';
+import { EmailService } from './email.js';
+import { PressKit } from './presskit.js';
+import { TourManager } from './tour.js';
+import { Collaborations } from './collaborations.js';
+import { Sessions } from './sessions.js';
+import { Notifications } from './notifications.js';
+import { Security } from './security.js';
+import { Performance } from './performance.js';
+import { Validation } from './validation.js';
 
 class YSHDDEPK {
     constructor() {
