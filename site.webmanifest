@@ -1,54 +1,157 @@
 {
-  "name": "YSHDD",
+  "name": "YSHDD EPK",
   "short_name": "YSHDD",
-  "description": "EPK oficial de YSHDD, artista cristiano de rap, trap y hip hop con un mensaje de fe y propósito",
+  "description": "Electronic Press Kit oficial del artista YSHDD - Rap Cristiano Contemporáneo",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
   "background_color": "#111111",
   "theme_color": "#ffdd57",
-  "orientation": "portrait",
-  "icons": [
+  "categories": ["music", "entertainment", "lifestyle"],
+  "lang": "es",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [
     {
-      "src": "img/icons/icon-72x72.webp",
-      "sizes": "72x72",
-      "type": "image/webp"
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.yshdd.epk",
+      "id": "com.yshdd.epk"
     },
     {
-      "src": "img/icons/icon-96x96.webp",
-      "sizes": "96x96",
-      "type": "image/webp"
-    },
-    {
-      "src": "img/icons/icon-128x128.webp",
-      "sizes": "128x128",
-      "type": "image/webp"
-    },
-    {
-      "src": "img/icons/icon-144x144.webp",
-      "sizes": "144x144",
-      "type": "image/webp"
-    },
-    {
-      "src": "img/icons/icon-152x152.webp",
-      "sizes": "152x152",
-      "type": "image/webp"
-    },
-    {
-      "src": "img/icons/icon-192x192.webp",
-      "sizes": "192x192",
-      "type": "image/webp"
-    },
-    {
-      "src": "img/icons/icon-384x384.webp",
-      "sizes": "384x384",
-      "type": "image/webp"
-    },
-    {
-      "src": "img/icons/icon-512x512.webp",
-      "sizes": "512x512",
-      "type": "image/webp"
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/yshdd-epk/id1234567890"
     }
   ],
-  "categories": ["music", "entertainment"],
-  "lang": "es"
+  "protocol_handlers": [
+    {
+      "protocol": "web+yshdd",
+      "url": "/?source=%s"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Escuchar Música",
+      "short_name": "Música",
+      "description": "Escucha los últimos lanzamientos",
+      "url": "/#music",
+      "icons": [
+        {
+          "src": "/assets/icons/music-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Contacto Booking",
+      "short_name": "Booking",
+      "description": "Solicita información para eventos",
+      "url": "/#contact",
+      "icons": [
+        {
+          "src": "/assets/icons/calendar-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Descargar EPK",
+      "short_name": "EPK",
+      "description": "Descarga el press kit completo",
+      "url": "/#download",
+      "icons": [
+        {
+          "src": "/assets/icons/download-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "YSHDD EPK - Versión desktop"
+    },
+    {
+      "src": "/assets/screenshots/mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "YSHDD EPK - Versión móvil"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/assets/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
