@@ -528,11 +528,10 @@ class YSHDDEPK {
 
     initFloatingActions() {
         const backToTop = document.getElementById('backToTop');
-        const quickEPK = document.getElementById('quickEPK');
         
         if (backToTop) {
             backToTop.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({ inset-block-start:0, behavior:'smooth' });
                 this.modules.analytics.trackEvent('ui', 'back_to_top', 'click');
             });
         }
@@ -690,7 +689,7 @@ class YSHDDEPK {
             const sectionTop = section.offsetTop;
             const sectionHeight = section.clientHeight;
             
-            if (scrollPosition >= sectionTop && 
+            if (scrollPosition >= sectionTop &&
                 scrollPosition < sectionTop + sectionHeight) {
                 currentSection = section.id;
             }
@@ -750,7 +749,6 @@ class YSHDDEPK {
     }
 
     isElementInViewport(el) {
-        const rect = el.getBoundingClientRect();
         return (
             rect.top <= window.innerHeight &&
             rect.bottom >= 0 &&

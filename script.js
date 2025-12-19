@@ -81,7 +81,7 @@ function initBackToTop() {
   const backToTop = document.querySelector('.back-to-top');
   if (backToTop) {
     backToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ inset-block-start: 0, behavior: 'smooth' });
     });
   }
 }
