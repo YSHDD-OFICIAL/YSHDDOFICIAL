@@ -1,314 +1,371 @@
-const APP_VERSION = 'v2.0.0';
-const CACHE_NAME = `yshdd-epk-${APP_VERSION}`;
-const OFFLINE_PAGE = '/offline.html';
-const ASSETS_TO_PRECACHE = [
+// sw.js - Service Worker profesional para YSHDD EPK
+const CACHE_NAME = 'yshdd-epk-v2.5.0';
+const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/main.css',
   '/main.js',
-  '/script.js',
-  '/analytics.js',
-  '/notificacion.js',
-  '/actualizacion.js',
-  '/seguridad.js',
-  '/Email.js',
-  '/privacy.html',
-  '/offline.html',
-  '/404.html',
-  '/site.webmanifest',
-  '/robots.txt',
-  '/sitemap.xml',
-  '/img/bio/bio-image.webp',
-  '/img/albums/crisis.webp',
-  '/img/albums/quiensoy.webp',
-  '/img/videos/quien-soy-thumb.webp',
-  '/img/videos/crisis-thumb.webp',
-  '/img/videos/entrevista-thumb.webp',
-  '/img/gallery/concierto.webp',
-  '/img/gallery/estudio.webp',
-  '/img/gallery/fotos.webp',
-  '/img/gallery/vivo.webp',
-  '/img/icons/icon-192x192.webp',
-  '/img/icons/icon-512x512.webp',
-  '/img/favicon.ico',
-  '/img/social-share.webp',
-  'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Oswald:wght@500&display=swap',
-  'https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'
+  '/profile-main.jpg',
+  '/crisis.jpg',
+  '/quien-soy.jpg',
+  '/YSHDD.mp4',
+  '/favicon.ico',
+  '/site.webmanifest'
 ];
 
-// ====== INSTALL EVENT ======
-self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing version:', APP_VERSION);
-  
+// Instalar Service Worker
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[Service Worker] Precaching critical assets');
-        return cache.addAll(ASSETS_TO_PRECACHE);
+      .then(cache => {
+        console.log('📦 Cacheando recursos críticos');
+        return cache.addAll(ASSETS_TO_CACHE);
       })
       .then(() => {
-        console.log('[Service Worker] Skip waiting and activate immediately');
+        console.log('✅ Service Worker instalado');
         return self.skipWaiting();
       })
-      .catch((err) => {
-        console.error('[Service Worker] Install failed:', err);
+      .catch(error => {
+        console.error('❌ Error instalando Service Worker:', error);
       })
   );
 });
 
-// ====== ACTIVATE EVENT ======
-self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating version:', APP_VERSION);
-  
+// Activar y limpiar caches viejos
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // Eliminar cachés antiguas que no coincidan con el nombre actual
-          if (cacheName !== CACHE_NAME && cacheName.startsWith('yshdd-epk-')) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-    .then(() => {
-      console.log('[Service Worker] Claiming clients');
-      return self.clients.claim();
-    })
-    .catch((err) => {
-      console.error('[Service Worker] Activation failed:', err);
-    })
+    caches.keys()
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('🗑️ Eliminando cache viejo:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('✅ Service Worker activado');
+        return self.clients.claim();
+      })
   );
 });
 
-// ====== FETCH EVENT ======
-self.addEventListener('fetch', (event) => {
-  const request = event.request;
-  const requestUrl = new URL(request.url);
-  
-  // Solo manejar solicitudes GET y que sean cacheables
-  if (request.method !== 'GET' || !isCacheable(request)) {
+// Estrategia: Stale-While-Revalidate para mejor performance
+self.addEventListener('fetch', event => {
+  // Evitar cache para solicitudes de analytics y APIs externas
+  if (this.shouldSkipCache(event.request)) {
     return;
   }
   
-  // Estrategia: Stale-While-Revalidate para mejor performance
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      // Siempre hacer la petición a red para actualizar la caché
-      const fetchPromise = fetch(request).then((networkResponse) => {
-        // Clonar la respuesta para guardarla en caché
-        if (networkResponse.ok) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Fallback para cuando no hay conexión
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        
-        // Fallback específico para navegación
-        if (request.mode === 'navigate') {
-          return caches.match(OFFLINE_PAGE);
-        }
-        
-        // Fallback para imágenes
-        if (request.headers.get('Accept').includes('image')) {
-          return caches.match('/img/icons/icon-192x192.webp');
-        }
-        
-        return new Response('Offline - No hay conexión a internet', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({ 'Content-Type': 'text/plain' })
-        });
-      });
-      
-      // Devolver la respuesta en caché inmediatamente si existe, mientras se actualiza
-      return cachedResponse || fetchPromise;
-    })
-  );
-});
-
-// ====== PUSH NOTIFICATIONS ======
-self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push received');
-  
-  let pushData = { 
-    title: 'YSHDD - Nuevo contenido', 
-    body: 'Hay nueva música disponible', 
-    icon: '/img/icons/icon-192x192.webp',
-    url: '/'
-  };
-  
-  try {
-    pushData = event.data.json();
-  } catch (err) {
-    console.log('[Service Worker] Push data not JSON, using default');
+  // Para solicitudes de navegación, usar network-first
+  if (event.request.mode === 'navigate') {
+    event.respondWith(this.handleNavigationRequest(event.request));
+    return;
   }
   
+  // Para recursos estáticos, usar cache-first
+  if (this.isStaticAsset(event.request)) {
+    event.respondWith(this.handleStaticRequest(event.request));
+    return;
+  }
+  
+  // Para todo lo demás, usar stale-while-revalidate
+  event.respondWith(this.handleStaleWhileRevalidate(event.request));
+});
+
+// Métodos de manejo de requests
+shouldSkipCache(request) {
+  const url = new URL(request.url);
+  
+  // No cachear solicitudes de analytics
+  if (url.hostname.includes('google-analytics') ||
+      url.hostname.includes('gtag') ||
+      url.hostname.includes('analytics')) {
+    return true;
+  }
+  
+  // No cachear APIs externas
+  if (url.hostname.includes('api.') ||
+      url.hostname.includes('backend')) {
+    return true;
+  }
+  
+  // No cachear WebSocket
+  if (request.url.startsWith('ws:') || request.url.startsWith('wss:')) {
+    return true;
+  }
+  
+  return false;
+}
+
+async handleNavigationRequest(request) {
+  try {
+    // Intentar network primero
+    const networkResponse = await fetch(request);
+    
+    // Clonar respuesta para cache
+    const clonedResponse = networkResponse.clone();
+    
+    // Actualizar cache en background
+    caches.open(CACHE_NAME)
+      .then(cache => cache.put(request, clonedResponse))
+      .catch(error => console.error('Error actualizando cache:', error));
+    
+    return networkResponse;
+    
+  } catch (error) {
+    // Fallback a cache si network falla
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // Fallback a página offline
+    return caches.match('/offline.html');
+  }
+}
+
+async handleStaticRequest(request) {
+  // Cache first para recursos estáticos
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    // Actualizar cache en background
+    this.updateCacheInBackground(request);
+    return cachedResponse;
+  }
+  
+  // Si no está en cache, fetch y cache
+  try {
+    const networkResponse = await fetch(request);
+    const clonedResponse = networkResponse.clone();
+    
+    caches.open(CACHE_NAME)
+      .then(cache => cache.put(request, clonedResponse))
+      .catch(error => console.error('Error cacheando recurso:', error));
+    
+    return networkResponse;
+    
+  } catch (error) {
+    console.error('Error fetching recurso:', error);
+    // Podrías retornar un fallback aquí
+    return new Response('', { status: 404, statusText: 'Not Found' });
+  }
+}
+
+async handleStaleWhileRevalidate(request) {
+  // Intentar cache primero
+  const cachedPromise = caches.match(request);
+  
+  // Network promise para actualizar cache
+  const networkPromise = fetch(request)
+    .then(networkResponse => {
+      // Clonar para cache
+      const clonedResponse = networkResponse.clone();
+      
+      // Actualizar cache
+      caches.open(CACHE_NAME)
+        .then(cache => cache.put(request, clonedResponse))
+        .catch(error => console.error('Error actualizando cache:', error));
+      
+      return networkResponse;
+    })
+    .catch(error => {
+      console.error('Error en network request:', error);
+      return null;
+    });
+  
+  // Retornar cache primero, luego actualizar
+  try {
+    const cachedResponse = await cachedPromise;
+    if (cachedResponse) {
+      // En background, actualizar desde network
+      networkPromise.catch(() => {}); // Ignorar errores
+      return cachedResponse;
+    }
+    
+    // Si no hay cache, esperar network
+    const networkResponse = await networkPromise;
+    if (networkResponse) {
+      return networkResponse;
+    }
+    
+    throw new Error('Network request failed');
+    
+  } catch (error) {
+    console.error('Error en stale-while-revalidate:', error);
+    return new Response('', { 
+      status: 503, 
+      statusText: 'Service Unavailable',
+      headers: { 'Retry-After': '30' }
+    });
+  }
+}
+
+isStaticAsset(request) {
+  const url = new URL(request.url);
+  const extension = url.pathname.split('.').pop().toLowerCase();
+  
+  const staticExtensions = [
+    'css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 
+    'webp', 'ico', 'woff', 'woff2', 'ttf', 'eot',
+    'mp4', 'webm', 'mp3', 'wav', 'pdf'
+  ];
+  
+  return staticExtensions.includes(extension) ||
+         request.url.includes('/assets/') ||
+         request.url.includes('/images/') ||
+         request.url.includes('/media/');
+}
+
+async updateCacheInBackground(request) {
+  try {
+    const networkResponse = await fetch(request);
+    const clonedResponse = networkResponse.clone();
+    
+    caches.open(CACHE_NAME)
+      .then(cache => cache.put(request, clonedResponse))
+      .catch(error => console.error('Error actualizando cache en background:', error));
+      
+  } catch (error) {
+    console.error('Error en background fetch:', error);
+  }
+}
+
+// Manejar mensajes del cliente
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data === 'UPDATE_CACHE') {
+    this.updateCache();
+  }
+  
+  if (event.data.type === 'CACHE_URLS') {
+    event.waitUntil(
+      caches.open(CACHE_NAME)
+        .then(cache => cache.addAll(event.data.urls))
+        .then(() => {
+          event.ports[0].postMessage({ success: true });
+        })
+        .catch(error => {
+          event.ports[0].postMessage({ success: false, error: error.message });
+        })
+    );
+  }
+});
+
+async updateCache() {
+  const cache = await caches.open(CACHE_NAME);
+  
+  // Actualizar recursos críticos
+  for (const url of ASSETS_TO_CACHE) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        await cache.put(url, response);
+      }
+    } catch (error) {
+      console.error(`Error actualizando ${url}:`, error);
+    }
+  }
+  
+  // Limpiar recursos no utilizados
+  const cachedRequests = await cache.keys();
+  const currentUrls = new Set(ASSETS_TO_CACHE);
+  
+  for (const request of cachedRequests) {
+    if (!currentUrls.has(request.url)) {
+      await cache.delete(request);
+    }
+  }
+  
+  console.log('✅ Cache actualizado');
+}
+
+// Manejar sync events (para background sync)
+self.addEventListener('sync', event => {
+  if (event.tag === 'update-content') {
+    event.waitUntil(this.updateCache());
+  }
+});
+
+// Manejar push notifications
+self.addEventListener('push', event => {
+  if (!event.data) return;
+  
+  const data = event.data.json();
   const options = {
-    body: pushData.body || 'Nuevo contenido disponible de YSHDD',
-    icon: pushData.icon || '/img/icons/icon-192x192.webp',
-    badge: '/img/icons/icon-72x72.webp',
-    image: pushData.image || '/img/social-share.webp',
+    body: data.body,
+    icon: '/assets/images/icon-192x192.png',
+    badge: '/assets/images/badge-72x72.png',
+    vibrate: [100, 50, 100],
     data: {
-      url: pushData.url || '/',
-      timestamp: Date.now()
+      dateOfArrival: Date.now(),
+      primaryKey: data.id || '1'
     },
     actions: [
-      { action: 'view', title: 'Ver ahora' },
-      { action: 'dismiss', title: 'Descartar' }
+      {
+        action: 'explore',
+        title: 'Ver más'
+      },
+      {
+        action: 'close',
+        title: 'Cerrar'
+      }
     ]
   };
   
   event.waitUntil(
-    self.registration.showNotification(
-      pushData.title || 'YSHDD', 
-      options
-    )
+    self.registration.showNotification(data.title, options)
   );
 });
 
-self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification clicked');
-  
+self.addEventListener('notificationclick', event => {
   event.notification.close();
   
-  if (event.action === 'view' || event.action === '') {
+  if (event.action === 'explore') {
     event.waitUntil(
-      clients.openWindow(event.notification.data.url)
+      clients.openWindow('/')
     );
   }
 });
 
-// ====== BACKGROUND SYNC ======
-self.addEventListener('sync', (event) => {
-  console.log('[Service Worker] Background sync:', event.tag);
+// Precache de rutas dinámicas
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
   
-  if (event.tag === 'sync-contact-forms') {
-    event.waitUntil(
-      syncPendingForms()
-        .then(() => console.log('[Service Worker] Forms synced successfully'))
-        .catch(err => console.error('[Service Worker] Sync failed:', err))
-    );
-  }
-});
-
-// ====== HELPER FUNCTIONS ======
-function isCacheable(request) {
-  const requestUrl = new URL(request.url);
-  
-  // No cachear solicitudes a Netlify functions o admin
-  if (requestUrl.pathname.startsWith('/.netlify/')) {
-    return false;
-  }
-  
-  // No cachear solicitudes a APIs externas (excepto fuentes e iconos)
-  if (requestUrl.origin !== self.location.origin) {
-    const allowedDomains = [
-      'fonts.googleapis.com',
-      'fonts.gstatic.com',
-      'unpkg.com'
-    ];
-    
-    if (!allowedDomains.includes(requestUrl.hostname)) {
-      return false;
-    }
-  }
-  
-  // Solo cachear recursos estáticos
-  const staticExtensions = ['.css', '.js', '.html', '.webp', '.jpg', '.png', '.ico', '.woff2', '.ttf'];
-  return staticExtensions.some(ext => requestUrl.pathname.endsWith(ext));
-}
-
-async function syncPendingForms() {
-  // Implementar lógica para sincronizar formularios pendientes
-  // Esto es útil para cuando el usuario envía formularios offline
-  try {
-    const cache = await caches.open('pending-forms');
-    const keys = await cache.keys();
-    
-    for (const key of keys) {
-      const request = await cache.match(key);
-      try {
-        const response = await fetch(request);
-        if (response.ok) {
-          await cache.delete(key);
-          console.log('[Service Worker] Form synced successfully');
-        }
-      } catch (err) {
-        console.error('[Service Worker] Failed to sync form:', err);
-        throw err;
-      }
-    }
-  } catch (err) {
-    console.error('[Service Worker] Error accessing pending forms cache:', err);
-  }
-}
-
-// ====== PERIODIC SYNC (para actualizaciones en segundo plano) ======
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'update-content') {
-    console.log('[Service Worker] Periodic sync for content updates');
-    event.waitUntil(updateCachedContent());
-  }
-});
-
-async function updateCachedContent() {
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    const cachedRequests = await cache.keys();
-    
-    for (const request of cachedRequests) {
-      if (shouldUpdate(request.url)) {
-        try {
-          const networkResponse = await fetch(request);
-          if (networkResponse.ok) {
-            await cache.put(request, networkResponse.clone());
-            console.log(`[Service Worker] Updated cache for: ${request.url}`);
+  // Precache para rutas específicas
+  if (url.pathname.startsWith('/album/') || 
+      url.pathname.startsWith('/session/')) {
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          if (response) {
+            return response;
           }
-        } catch (err) {
-          console.error(`[Service Worker] Failed to update ${request.url}:`, err);
-        }
-      }
-    }
-  } catch (err) {
-    console.error('[Service Worker] Error updating cached content:', err);
-  }
-}
-
-function shouldUpdate(url) {
-  // Actualizar solo ciertos tipos de recursos con menor frecuencia
-  const updateableResources = ['.html', '.css', '.js', '.json'];
-  return updateableResources.some(ext => url.endsWith(ext));
-}
-
-// ====== MESSAGE HANDLING ======
-self.addEventListener('message', (event) => {
-  console.log('[Service Worker] Message received:', event.data);
-  
-  if (event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  if (event.data.type === 'CACHE_NEW_RESOURCE') {
-    caches.open(CACHE_NAME).then(cache => {
-      cache.add(event.data.url);
-    });
+          
+          return fetch(event.request)
+            .then(networkResponse => {
+              // Cachear para futuro uso
+              const clonedResponse = networkResponse.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(event.request, clonedResponse));
+              
+              return networkResponse;
+            })
+            .catch(() => {
+              // Fallback genérico
+              return new Response(
+                JSON.stringify({ error: 'Content not available offline' }),
+                { 
+                  headers: { 'Content-Type': 'application/json' }
+                }
+              );
+            });
+        })
+    );
   }
 });
-
-// ====== OFFLINE DETECTION ======
-// Función para verificar el estado de conexión
-function updateOnlineStatus() {
-  console.log('[Service Worker] Connectivity changed:', navigator.onLine ? 'online' : 'offline');
-}
-
-// Escuchar cambios en la conectividad
-self.addEventListener('online', updateOnlineStatus);
-self.addEventListener('offline', updateOnlineStatus);
