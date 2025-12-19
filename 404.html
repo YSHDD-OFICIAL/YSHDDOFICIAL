@@ -1,147 +1,120 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página no encontrada - YSHDD</title>
+    <title>Página no encontrada | YSHDD EPK</title>
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="assets/css/components.css">
     <style>
-        :root {
-            --color-primario: #ffdd57;
-            --color-secundario: #222;
-            --color-fondo: #111;
-            --color-texto: #ffffff;
-            --color-texto-secundario: rgba(255, 255, 255, 0.8);
-            --fuente-principal: 'Montserrat', sans-serif;
-            --fuente-titulos: 'Playfair Display', serif;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: var(--fuente-principal);
-            background: var(--color-fondo);
-            color: var(--color-texto);
-            height: 100vh;
+        .error-container {
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             text-align: center;
-            padding: 20px;
-            background-image: linear-gradient(135deg, #111, #1a1a2e);
+            padding: 2rem;
         }
         
-        .container {
+        .error-content {
             max-width: 600px;
-            padding: 30px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        }
-        
-        .logo {
-            font-family: var(--fuente-titulos);
-            font-size: 3rem;
-            margin-bottom: 20px;
-            background: linear-gradient(90deg, #ffdd57, #e94560);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        
-        h1 {
-            font-family: var(--fuente-titulos);
-            color: var(--color-primario);
-            margin-bottom: 15px;
-            font-size: 2rem;
-        }
-        
-        p {
-            color: var(--color-texto-secundario);
-            margin-bottom: 25px;
-            line-height: 1.6;
         }
         
         .error-code {
-            font-size: 6rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            background: linear-gradient(90deg, #ffdd57, #e94560);
+            font-size: 8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            margin-bottom: 1rem;
+            line-height: 1;
         }
         
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background: linear-gradient(90deg, #ffdd57, #e94560);
-            color: var(--color-secundario);
-            border: none;
-            border-radius: 50px;
-            font-weight: 700;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 5px;
+        .error-message {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: var(--color-text-secondary);
         }
         
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(233, 69, 96, 0.4);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid var(--color-primario);
-            color: var(--color-primario);
-        }
-        
-        .navigation {
-            margin-top: 30px;
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
         }
         
         @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-            
-            .logo {
-                font-size: 2.5rem;
-            }
-            
-            h1 {
-                font-size: 1.7rem;
-            }
-            
             .error-code {
-                font-size: 4rem;
+                font-size: 6rem;
             }
             
-            .btn {
-                display: block;
-                margin: 10px auto;
-                width: 200px;
+            .error-actions {
+                flex-direction: column;
+            }
+            
+            .error-actions .btn {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">YSHDD</div>
-        <div class="error-code">404</div>
-        <h1>Página no encontrada</h1>
-        <p>Lo sentimos, la página que estás buscando no existe o ha sido movida.</p>
-        <p>Puedes regresar al inicio o explorar otras secciones de nuestro sitio.</p>
-        
-        <div class="navigation">
-            <a href="index.html" class="btn">Volver al Inicio</a>
-            <a href="javascript:history.back()" class="btn btn-secondary">Volver Atrás</a>
+    <div class="error-container">
+        <div class="error-content">
+            <div class="error-code">404</div>
+            <h1 class="error-title">Página no encontrada</h1>
+            <p class="error-message">
+                La página que buscas no existe o ha sido movida.
+                <br>
+                Pero no te preocupes, la música de YSHDD sigue disponible.
+            </p>
+            
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary">
+                    <i class='bx bx-home'></i>
+                    Volver al inicio
+                </a>
+                <a href="/#music" class="btn btn-secondary">
+                    <i class='bx bx-music'></i>
+                    Escuchar música
+                </a>
+                <a href="/#contact" class="btn btn-outline">
+                    <i class='bx bx-envelope'></i>
+                    Contactar
+                </a>
+            </div>
+            
+            <div class="error-search" style="margin-top: 3rem;">
+                <p>¿Buscas algo específico?</p>
+                <form action="/search" method="GET" class="search-form" style="max-width: 400px; margin: 0 auto;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="search" 
+                               name="q" 
+                               placeholder="Buscar en el EPK..." 
+                               style="flex: 1; padding: 0.75rem 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: var(--color-text);">
+                        <button type="submit" class="btn btn-primary">
+                            <i class='bx bx-search'></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+
+    <script>
+        // Track 404 error
+        if (typeof gtag !== 'undefined') {
+            gtag('event', '404_error', {
+                page_location: window.location.href,
+                page_path: window.location.pathname
+            });
+        }
+        
+        // Auto-redirect after 30 seconds
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 30000);
+    </script>
 </body>
 </html>
