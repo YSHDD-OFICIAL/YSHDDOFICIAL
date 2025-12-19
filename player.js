@@ -1,6 +1,4 @@
-// assets/js/player.js
-
-import { CONFIG, UTILS } from './config.js';
+import { CONFIG, CONSTANTS, UTILS } from './config.js';
 
 export class Player {
     constructor() {
@@ -213,7 +211,7 @@ export class Player {
     
     restoreState() {
         // Restaurar volumen
-        const savedVolume = localStorage.getItem(CONFIG.STORAGE_KEYS.MUSIC_VOLUME);
+        const savedVolume = localStorage.getItem(CONSTANTS.STORAGE_KEYS.MUSIC_VOLUME);
         if (savedVolume) {
             this.volume = parseInt(savedVolume);
             this.audio.volume = this.volume / 100;
@@ -235,7 +233,7 @@ export class Player {
     }
     
     saveState() {
-        localStorage.setItem(CONFIG.STORAGE_KEYS.MUSIC_VOLUME, this.volume);
+        localStorage.setItem(CONSTANTS.STORAGE_KEYS.MUSIC_VOLUME, this.volume);
         if (this.currentTrack) {
             localStorage.setItem('yshdd-last-track', this.currentTrack.id);
         }
