@@ -1,5 +1,5 @@
-// sw.js - Service Worker profesional para YSHDD EPK
-const CACHE_NAME = 'yshdd-epk-v2.5.0';
+// sw.js - Service Worker profesional para YSHDD EPK - VERSIÓN CORREGIDA
+const CACHE_NAME = 'yshdd-epk-v2.6.0';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -10,73 +10,29 @@ const ASSETS_TO_CACHE = [
   '/quien-soy.jpg',
   '/YSHDD.mp4',
   '/favicon.ico',
-  '/site.webmanifest'
+  '/site.webmanifest',
+  '/offline.html',
+  '/utils.js',
+  '/notifications.js',
+  '/seguridad.js',
+  '/privacy.html',
+  '/actualizacion.js',
+  '/analytics.js',
+  '/email.js',
+  '/404.html',
+  '/collaborations.js',
+  '/contact.php',
+  '/player.js',
+  '/performance.js',
+  '/sessions.js',
+  '/validation.js',
+  '/robots.txt',
+  '/privacy.html',
 ];
 
-// Instalar Service Worker
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('📦 Cacheando recursos críticos');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .then(() => {
-        console.log('✅ Service Worker instalado');
-        return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('❌ Error instalando Service Worker:', error);
-      })
-  );
-});
+// ====== FUNCIONES AUXILIARES ======
 
-// Activar y limpiar caches viejos
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('🗑️ Eliminando cache viejo:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('✅ Service Worker activado');
-        return self.clients.claim();
-      })
-  );
-});
-
-// Estrategia: Stale-While-Revalidate para mejor performance
-self.addEventListener('fetch', event => {
-  // Evitar cache para solicitudes de analytics y APIs externas
-  if (this.shouldSkipCache(event.request)) {
-    return;
-  }
-  
-  // Para solicitudes de navegación, usar network-first
-  if (event.request.mode === 'navigate') {
-    event.respondWith(this.handleNavigationRequest(event.request));
-    return;
-  }
-  
-  // Para recursos estáticos, usar cache-first
-  if (this.isStaticAsset(event.request)) {
-    event.respondWith(this.handleStaticRequest(event.request));
-    return;
-  }
-  
-  // Para todo lo demás, usar stale-while-revalidate
-  event.respondWith(this.handleStaleWhileRevalidate(event.request));
-});
-
-// Métodos de manejo de requests
-shouldSkipCache(request) {
+function shouldSkipCache(request) {
   const url = new URL(request.url);
   
   // No cachear solicitudes de analytics
@@ -100,7 +56,7 @@ shouldSkipCache(request) {
   return false;
 }
 
-async handleNavigationRequest(request) {
+async function handleNavigationRequest(request) {
   try {
     // Intentar network primero
     const networkResponse = await fetch(request);
@@ -127,12 +83,28 @@ async handleNavigationRequest(request) {
   }
 }
 
-async handleStaticRequest(request) {
+function isStaticAsset(request) {
+  const url = new URL(request.url);
+  const extension = url.pathname.split('.').pop().toLowerCase();
+  
+  const staticExtensions = [
+    'css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 
+    'webp', 'ico', 'woff', 'woff2', 'ttf', 'eot',
+    'mp4', 'webm', 'mp3', 'wav', 'pdf'
+  ];
+  
+  return staticExtensions.includes(extension) ||
+         request.url.includes('/assets/') ||
+         request.url.includes('/images/') ||
+         request.url.includes('/media/');
+}
+
+async function handleStaticRequest(request) {
   // Cache first para recursos estáticos
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
     // Actualizar cache en background
-    this.updateCacheInBackground(request);
+    updateCacheInBackground(request);
     return cachedResponse;
   }
   
@@ -154,7 +126,7 @@ async handleStaticRequest(request) {
   }
 }
 
-async handleStaleWhileRevalidate(request) {
+async function handleStaleWhileRevalidate(request) {
   // Intentar cache primero
   const cachedPromise = caches.match(request);
   
@@ -203,23 +175,7 @@ async handleStaleWhileRevalidate(request) {
   }
 }
 
-isStaticAsset(request) {
-  const url = new URL(request.url);
-  const extension = url.pathname.split('.').pop().toLowerCase();
-  
-  const staticExtensions = [
-    'css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 
-    'webp', 'ico', 'woff', 'woff2', 'ttf', 'eot',
-    'mp4', 'webm', 'mp3', 'wav', 'pdf'
-  ];
-  
-  return staticExtensions.includes(extension) ||
-         request.url.includes('/assets/') ||
-         request.url.includes('/images/') ||
-         request.url.includes('/media/');
-}
-
-async updateCacheInBackground(request) {
+async function updateCacheInBackground(request) {
   try {
     const networkResponse = await fetch(request);
     const clonedResponse = networkResponse.clone();
@@ -233,31 +189,7 @@ async updateCacheInBackground(request) {
   }
 }
 
-// Manejar mensajes del cliente
-self.addEventListener('message', event => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  if (event.data === 'UPDATE_CACHE') {
-    this.updateCache();
-  }
-  
-  if (event.data.type === 'CACHE_URLS') {
-    event.waitUntil(
-      caches.open(CACHE_NAME)
-        .then(cache => cache.addAll(event.data.urls))
-        .then(() => {
-          event.ports[0].postMessage({ success: true });
-        })
-        .catch(error => {
-          event.ports[0].postMessage({ success: false, error: error.message });
-        })
-    );
-  }
-});
-
-async updateCache() {
+async function updateCache() {
   const cache = await caches.open(CACHE_NAME);
   
   // Actualizar recursos críticos
@@ -285,10 +217,102 @@ async updateCache() {
   console.log('✅ Cache actualizado');
 }
 
+// ====== EVENT LISTENERS DEL SERVICE WORKER ======
+
+// Instalar Service Worker
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('📦 Cacheando recursos críticos');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .then(() => {
+        console.log('✅ Service Worker instalado');
+        return self.skipWaiting();
+      })
+      .catch(error => {
+        console.error('❌ Error instalando Service Worker:', error);
+      })
+  );
+});
+
+// Activar y limpiar caches viejos
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('🗑️ Eliminando cache viejo:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('✅ Service Worker activado');
+        return self.clients.claim();
+      })
+  );
+});
+
+// Estrategia: Stale-While-Revalidate para mejor performance
+self.addEventListener('fetch', event => {
+  // Evitar cache para solicitudes de analytics y APIs externas
+  if (shouldSkipCache(event.request)) {
+    return;
+  }
+  
+  // Para solicitudes de navegación, usar network-first
+  if (event.request.mode === 'navigate') {
+    event.respondWith(handleNavigationRequest(event.request));
+    return;
+  }
+  
+  // Para recursos estáticos, usar cache-first
+  if (isStaticAsset(event.request)) {
+    event.respondWith(handleStaticRequest(event.request));
+    return;
+  }
+  
+  // Para todo lo demás, usar stale-while-revalidate
+  event.respondWith(handleStaleWhileRevalidate(event.request));
+});
+
+// Manejar mensajes del cliente
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data === 'UPDATE_CACHE') {
+    updateCache();
+  }
+  
+  if (event.data && event.data.type === 'CACHE_URLS') {
+    event.waitUntil(
+      caches.open(CACHE_NAME)
+        .then(cache => cache.addAll(event.data.urls))
+        .then(() => {
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ success: true });
+          }
+        })
+        .catch(error => {
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ success: false, error: error.message });
+          }
+        })
+    );
+  }
+});
+
 // Manejar sync events (para background sync)
 self.addEventListener('sync', event => {
   if (event.tag === 'update-content') {
-    event.waitUntil(this.updateCache());
+    event.waitUntil(updateCache());
   }
 });
 
@@ -296,31 +320,35 @@ self.addEventListener('sync', event => {
 self.addEventListener('push', event => {
   if (!event.data) return;
   
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: '/assets/images/icon-192x192.png',
-    badge: '/assets/images/badge-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: data.id || '1'
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Ver más'
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.body || 'Nueva notificación',
+      icon: '/icon-192x192.png',
+      badge: '/badge-72x72.png',
+      vibrate: [100, 50, 100],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: data.id || '1'
       },
-      {
-        action: 'close',
-        title: 'Cerrar'
-      }
-    ]
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+      actions: [
+        {
+          action: 'explore',
+          title: 'Ver más'
+        },
+        {
+          action: 'close',
+          title: 'Cerrar'
+        }
+      ]
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'YSHDD', options)
+    );
+  } catch (error) {
+    console.error('Error procesando push notification:', error);
+  }
 });
 
 self.addEventListener('notificationclick', event => {
@@ -368,4 +396,14 @@ self.addEventListener('fetch', event => {
         })
     );
   }
+});
+
+// Manejo de errores del Service Worker
+self.addEventListener('error', event => {
+  console.error('Error en Service Worker:', event.error);
+});
+
+// Manejo de promise rejections
+self.addEventListener('unhandledrejection', event => {
+  console.error('Promesa rechazada en Service Worker:', event.reason);
 });
