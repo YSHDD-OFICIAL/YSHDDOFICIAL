@@ -5,7 +5,7 @@ const ASSETS_TO_CACHE = [
   '/index.html',
   '/main.css',
   '/main.js',
-  '/profile-main.jpg',
+  '/YSHDD.png',
   '/crisis.jpg',
   '/quien-soy.jpg',
   '/YSHDD.mp4',
