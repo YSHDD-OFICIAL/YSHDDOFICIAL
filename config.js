@@ -6,7 +6,7 @@ export const CONFIG = {
         name: 'YSHDD EPK',
         version: '2.6.0',
         build: '20250315',
-        author: 'YSHDD Team',
+        author: 'YSHDD',
         email: 'contacto@yshdd.com',
         website: 'https://yshdd.com',
         repo: 'https://github.com/yshdd/epk',
@@ -19,7 +19,7 @@ export const CONFIG = {
         realName: 'Luis Esteban Potosí Venté',
         birthDate: '2005-05-30',
         location: 'Cali, Colombia',
-        genre: ['Rap Cristiano', 'Trap Cristiano', 'Hip Hop Cristiano'],
+        genre: ['Rap Cristiano', 'Trap Cristiano', 'Hip Hop Cristiano', 'Drill Cristiano'],
         activeSince: 2023,
         label: 'Independiente',
         management: 'YSHDD Management',
@@ -40,7 +40,7 @@ export const CONFIG = {
         },
         keys: {
             analytics: 'G-XXXXXXXXXX',
-            vapid: 'TU_CLAVE_PUBLICA_VAPID',
+            vapid: '',
             recaptcha: 'SITE_KEY'
         }
     },
@@ -68,7 +68,7 @@ export const CONFIG = {
             handle: 'yshddoficial'
         },
         twitter: {
-            url: 'https://twitter.com/yshdd',
+            url: 'https://twitter.com/yshddoficial',
             handle: '@yshdd'
         },
         soundcloud: {
@@ -199,7 +199,7 @@ export const CONFIG = {
                 plays: 25000,
                 likes: 1200,
                 spotifyId: 'album_id_1',
-                cover: 'assets/images/album-covers/crisis.jpg'
+                cover: './crisis.jpg'
             },
             {
                 id: 2,
@@ -211,7 +211,7 @@ export const CONFIG = {
                 plays: 50000,
                 likes: 2500,
                 spotifyId: 'track_id_1',
-                cover: 'assets/images/album-covers/quien-soy.jpg'
+                cover: './quien-soy.jpg'
             }
         ],
         
@@ -223,7 +223,7 @@ export const CONFIG = {
                 views: 50000,
                 duration: '3:45',
                 url: 'https://youtube.com/embed/naMGlK1ozFc',
-                thumbnail: 'assets/images/videos/official.jpg'
+                thumbnail: './official.jpg'
             }
         ],
         
@@ -232,10 +232,10 @@ export const CONFIG = {
             images: [
                 {
                     id: 1,
-                    src: 'assets/images/gallery/1.jpg',
-                    webp: 'assets/images/gallery/1.webp',
+                    src: './1.jpg',
+                    webp: './1.webp',
                     category: 'press',
-                    alt: 'YSHDD - Foto de prensa 1',
+                    alt: 'YSHDD',
                     width: 1200,
                     height: 800
                 }
