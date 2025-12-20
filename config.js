@@ -6,10 +6,10 @@ export const CONFIG = {
         name: 'YSHDD EPK',
         version: '2.6.0',
         build: '20250315',
-        author: 'YSHDD Team',
-        email: 'contacto@yshdd.com',
-        website: 'https://yshdd.com',
-        repo: 'https://github.com/yshdd/epk',
+        author: 'YSHDD',
+        email: 'yshddoficial@gmail.com',
+        website: 'https://yshdd.netlify.app/',
+        repo: 'https://github.com/YSHDD-OFICIAL/YSHDDOFICIAL/',
         license: 'Proprietary'
     },
     
@@ -23,12 +23,12 @@ export const CONFIG = {
         activeSince: 2023,
         label: 'Independiente',
         management: 'YSHDD Management',
-        booking: 'booking@yshdd.com'
+        booking: 'yshddoficial@gmail.com'
     },
     
     // APIs y endpoints
     api: {
-        baseUrl: 'https://api.yshdd.com',
+        baseUrl: 'https://yshdd.netlify.app/',
         endpoints: {
             contact: '/contact',
             newsletter: '/newsletter',
@@ -180,12 +180,12 @@ export const CONFIG = {
     // Contenido estático
     content: {
         stats: {
-            monthlyStreams: 52000,
-            followers: 10500,
+            monthlyStreams: 28,
+            followers: 8700,
             cities: 12,
             releases: 5,
             collaborations: 3,
-            performances: 10
+            performances: 50
         },
         
         releases: [
@@ -195,35 +195,23 @@ export const CONFIG = {
                 type: 'album',
                 year: 2025,
                 tracks: 5,
-                duration: '15:30',
-                plays: 25000,
-                likes: 1200,
-                spotifyId: 'album_id_1',
-                cover: 'assets/images/album-covers/crisis.jpg'
+                duration: '16:06',
+                plays: 118,
+                likes: 10,
+                spotifyId: '',
+                cover: 'crisis-v.png'
             },
-            {
-                id: 2,
-                title: '¿Quién Soy?',
-                type: 'single',
-                year: 2024,
-                tracks: 1,
-                duration: '3:45',
-                plays: 50000,
-                likes: 2500,
-                spotifyId: 'track_id_1',
-                cover: 'assets/images/album-covers/quien-soy.jpg'
-            }
         ],
         
         videos: [
             {
                 id: 1,
-                title: '¿Quién Soy? - Video Oficial',
+                title: 'Vida Nueva•YSHDD & SIRRIVAL - Instrumental (Audio Official)',
                 type: 'official',
-                views: 50000,
-                duration: '3:45',
-                url: 'https://youtube.com/embed/naMGlK1ozFc',
-                thumbnail: 'assets/images/videos/official.jpg'
+                views: 118,
+                duration: '2:33',
+                url: 'https://youtu.be/RZUXjDMY528?si=VuToIxLRDgkIQRPy',
+                thumbnail: 'VIDA-NUEVA.png'
             }
         ],
         
@@ -232,10 +220,10 @@ export const CONFIG = {
             images: [
                 {
                     id: 1,
-                    src: 'assets/images/gallery/1.jpg',
-                    webp: 'assets/images/gallery/1.webp',
+                    src: 'YSHDD.png',
+                    webp: 'YSHDD,png',
                     category: 'press',
-                    alt: 'YSHDD - Foto de prensa 1',
+                    alt: 'YSHDD',
                     width: 1200,
                     height: 800
                 }
