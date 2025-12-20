@@ -1,3 +1,4 @@
+//notifications.js
 // En tu config.js, dentro de export const UTILS = { ... }
 
 // Métodos de estado (para localStorage)
