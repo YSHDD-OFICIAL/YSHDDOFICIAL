@@ -1,6 +1,6 @@
 // assets/js/performance.js
 
-import { CONFIG, UTILS } from './config.js';
+import { CONFIG, CONSTANTS, UTILS } from './config.js';
 
 export class PerformanceMonitor {
     constructor() {
@@ -459,11 +459,21 @@ export class PerformanceMonitor {
     lazyLoadImages() {
         const images = document.querySelectorAll('img[data-src]:not(.loaded)');
         images.forEach(img => {
-            if (UTILS.isElementInViewport(img)) {
+            if (this.isElementInViewport(img)) {
                 img.src = img.dataset.src;
                 img.classList.add('loaded');
             }
         });
+    }
+    
+    isElementInViewport(el) {
+        const rect = el.getBoundingClientRect();
+        return (
+            rect.top <= window.innerHeight &&
+            rect.bottom >= 0 &&
+            rect.left <= window.innerWidth &&
+            rect.right >= 0
+        );
     }
     
     preconnectDomains() {
