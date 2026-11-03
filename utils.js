@@ -1,997 +1,580 @@
-// assets/js/utils.js
+/**
+ * ============================================================================
+ * utils.js — YSHDD EPK Premium 2027
+ * Utilidades compartidas del EPK.
+ *
+ * Objetivo:
+ * - Exponer helpers reutilizables SIN duplicar los que ya existen en
+ *   `config.js` (UTILS y Validators).
+ * - Todo lo que ya está en `UTILS` se reexporta para que este módulo sea
+ *   el punto de entrada canónico en el resto del código.
+ * - Añadir helpers específicos del EPK: DOM seguro, cookies, storage,
+ *   URLs, descargas, debounce/throttle, media queries, files.
+ *
+ * Reglas:
+ * - Sin dependencias externas.
+ * - Sin APIs inexistentes (sin `gtag` ficticio, sin `fetch` a backends).
+ * - Seguro ante ausencia de `localStorage`, `cookies`, `navigator.connection`.
+ * ============================================================================
+ */
 
-import { CONFIG, CONSTANTS, UTILS } from './config.js';
+'use strict';
 
-export class Utils {
-    // ====== MANEJO DE ESTADO ======
-    
-    static setState(key, value, storage = 'local') {
-        try {
-            const data = JSON.stringify({
-                value,
-                timestamp: Date.now(),
-                version: CONFIG.app.version
-            });
-            
-            if (storage === 'local') {
-                localStorage.setItem(key, data);
-            } else if (storage === 'session') {
-                sessionStorage.setItem(key, data);
-            }
-            
-            return true;
-        } catch (error) {
-            console.error('Error guardando estado:', error);
-            return false;
-        }
+import { CONFIG, CONSTANTS, UTILS, Validators, AppError } from './config.js';
+
+/* ============================================================================
+   Estado / Storage
+   ============================================================================ */
+
+const Storage = {
+  set(key, value, storage = 'local') {
+    try {
+      const store = storage === 'session' ? sessionStorage : localStorage;
+      store.setItem(key, JSON.stringify({
+        v: CONFIG?.app?.version || '0',
+        t: Date.now(),
+        value,
+      }));
+      return true;
+    } catch {
+      return false;
     }
-    
-    static getState(key, storage = 'local', maxAge = null) {
-        try {
-            const storageObj = storage === 'local' ? localStorage : sessionStorage;
-            const data = storageObj.getItem(key);
-            
-            if (!data) return null;
-            
-            const parsed = JSON.parse(data);
-            
-            // Verificar versión
-            if (parsed.version !== CONFIG.app.version) {
-                storageObj.removeItem(key);
-                return null;
-            }
-            
-            // Verificar antigüedad
-            if (maxAge && Date.now() - parsed.timestamp > maxAge) {
-                storageObj.removeItem(key);
-                return null;
-            }
-            
-            return parsed.value;
-        } catch (error) {
-            console.error('Error recuperando estado:', error);
-            return null;
-        }
-    }
-    
-    static removeState(key, storage = 'local') {
-        try {
-            const storageObj = storage === 'local' ? localStorage : sessionStorage;
-            storageObj.removeItem(key);
-            return true;
-        } catch (error) {
-            console.error('Error removiendo estado:', error);
-            return false;
-        }
-    }
-    
-    static clearState(storage = 'local') {
-        try {
-            const storageObj = storage === 'local' ? localStorage : sessionStorage;
-            storageObj.clear();
-            return true;
-        } catch (error) {
-            console.error('Error limpiando estado:', error);
-            return false;
-        }
-    }
-    
-    // ====== MANEJO DE COOKIES ======
-    
-    static setCookie(name, value, days = 365) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        const expires = `expires=${date.toUTCString()}`;
-        document.cookie = `${name}=${encodeURIComponent(value)};${expires};path=/;SameSite=Strict`;
-    }
-    
-    static getCookie(name) {
-        const nameEQ = `${name}=`;
-        const ca = document.cookie.split(';');
-        
-        for (let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) === ' ') {
-                c = c.substring(1);
-            }
-            if (c.indexOf(nameEQ) === 0) {
-                return decodeURIComponent(c.substring(nameEQ.length, c.length));
-            }
-        }
-        
+  },
+
+  get(key, storage = 'local', maxAge = null) {
+    try {
+      const store = storage === 'session' ? sessionStorage : localStorage;
+      const raw = store.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (maxAge && Date.now() - parsed.t > maxAge) {
+        store.removeItem(key);
         return null;
+      }
+      return parsed.value;
+    } catch {
+      return null;
     }
-    
-    static deleteCookie(name) {
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-    }
-    
-    // ====== MANEJO DE URLS ======
-    
-    static updateUrlParams(params = {}, replace = false) {
-        const url = new URL(window.location.href);
-        
-        Object.keys(params).forEach(key => {
-            if (params[key] === null || params[key] === undefined) {
-                url.searchParams.delete(key);
-            } else {
-                url.searchParams.set(key, params[key]);
-            }
-        });
-        
-        if (replace) {
-            window.history.replaceState({}, '', url);
-        } else {
-            window.history.pushState({}, '', url);
-        }
-    }
-    
-    static getUrlParam(key) {
-        const url = new URL(window.location.href);
-        return url.searchParams.get(key);
-    }
-    
-    static removeUrlParam(key) {
-        const url = new URL(window.location.href);
-        url.searchParams.delete(key);
-        window.history.replaceState({}, '', url);
-    }
-    
-    static createShareUrl(params = {}) {
-        const url = new URL(window.location.origin + window.location.pathname);
-        
-        Object.keys(params).forEach(key => {
-            url.searchParams.set(key, params[key]);
-        });
-        
-        return url.toString();
-    }
-    
-    // ====== MANEJO DE ARCHIVOS ======
-    
-    static readFileAsText(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            
-            reader.onload = (event) => {
-                resolve(event.target.result);
-            };
-            
-            reader.onerror = (error) => {
-                reject(error);
-            };
-            
-            reader.readAsText(file);
-        });
-    }
-    
-    static readFileAsDataURL(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            
-            reader.onload = (event) => {
-                resolve(event.target.result);
-            };
-            
-            reader.onerror = (error) => {
-                reject(error);
-            };
-            
-            reader.readAsDataURL(file);
-        });
-    }
-    
-    static downloadTextFile(content, filename, type = 'text/plain') {
-        const blob = new Blob([content], { type });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 100);
-    }
-    
-    static downloadJSONFile(data, filename) {
-        const content = JSON.stringify(data, null, 2);
-        this.downloadTextFile(content, filename, 'application/json');
-    }
-    
-    // ====== MANEJO DE FECHAS ======
-    
-    static formatDate(date, format = 'es') {
-        if (!date) return '';
-        
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return '';
-        
-        if (format === 'es') {
-            return d.toLocaleDateString('es-ES', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-        } else if (format === 'short') {
-            return d.toLocaleDateString('es-ES', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
-        } else if (format === 'relative') {
-            return this.getRelativeTime(d);
-        } else if (format === 'datetime') {
-            return d.toLocaleString('es-ES', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-        
-        return d.toLocaleDateString();
-    }
-    
-    static getRelativeTime(date) {
-        const now = new Date();
-        const diff = now - new Date(date);
-        const seconds = Math.floor(diff / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
-        
-        if (days > 30) {
-            return this.formatDate(date, 'short');
-        } else if (days > 0) {
-            return `hace ${days} día${days > 1 ? 's' : ''}`;
-        } else if (hours > 0) {
-            return `hace ${hours} hora${hours > 1 ? 's' : ''}`;
-        } else if (minutes > 0) {
-            return `hace ${minutes} minuto${minutes > 1 ? 's' : ''}`;
-        } else {
-            return 'hace unos segundos';
-        }
-    }
-    
-    static formatDuration(seconds) {
-        if (!seconds && seconds !== 0) return '0:00';
-        
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        
-        if (hours > 0) {
-            return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        } else {
-            return `${minutes}:${secs.toString().padStart(2, '0')}`;
-        }
-    }
-    
-    // ====== MANEJO DE DOM ======
-    
-    static createElement(tag, attributes = {}, children = []) {
-        return UTILS.createElement(tag, attributes, children);
-    }
-    
-    static removeElement(element) {
-        if (element && element.parentNode) {
-            element.parentNode.removeChild(element);
-        }
-    }
-    
-    static fadeOut(element, duration = 300) {
-        return new Promise(resolve => {
-            element.style.transition = `opacity ${duration}ms`;
-            element.style.opacity = '0';
-            
-            setTimeout(() => {
-                this.removeElement(element);
-                resolve();
-            }, duration);
-        });
-    }
-    
-    static fadeIn(element, duration = 300) {
-        return new Promise(resolve => {
-            element.style.opacity = '0';
-            element.style.transition = `opacity ${duration}ms`;
-            element.style.display = '';
-            
-            requestAnimationFrame(() => {
-                element.style.opacity = '1';
-            });
-            
-            setTimeout(resolve, duration);
-        });
-    }
-    
-    static toggleElement(element, show) {
-        if (show) {
-            element.style.display = '';
-        } else {
-            element.style.display = 'none';
-        }
-    }
-    
-    static scrollToElement(element, offset = 100, behavior = 'smooth') {
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - offset;
-        
-        window.scrollTo({
-            top: offsetPosition,
-            behavior
-        });
-    }
-    
-    static scrollToTop(behavior = 'smooth') {
-        window.scrollTo({
-            top: 0,
-            behavior
-        });
-    }
-    
-    static isElementInViewport(el, threshold = 0) {
-        if (!el) return false;
-        
-        const rect = el.getBoundingClientRect();
-        const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-        const windowWidth = window.innerWidth || document.documentElement.clientWidth;
-        
-        return (
-            rect.top <= windowHeight - threshold &&
-            rect.bottom >= threshold &&
-            rect.left <= windowWidth - threshold &&
-            rect.right >= threshold
-        );
-    }
-    
-    // ====== MANEJO DE EVENTOS ======
-    
-    static addGlobalEventListener(event, selector, handler, options = {}) {
-        document.addEventListener(event, (e) => {
-            if (e.target.matches(selector)) {
-                handler(e);
-            }
-        }, options);
-    }
-    
-    static debounceEvent(element, event, handler, delay = 300) {
-        let timeout;
-        
-        const debouncedHandler = (e) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => handler(e), delay);
-        };
-        
-        element.addEventListener(event, debouncedHandler);
-        
-        return () => {
-            element.removeEventListener(event, debouncedHandler);
-        };
-    }
-    
-    static throttleEvent(element, event, handler, limit = 300) {
-        let inThrottle;
-        
-        const throttledHandler = (e) => {
-            if (!inThrottle) {
-                handler(e);
-                inThrottle = true;
-                setTimeout(() => inThrottle = false, limit);
-            }
-        };
-        
-        element.addEventListener(event, throttledHandler);
-        
-        return () => {
-            element.removeEventListener(event, throttledHandler);
-        };
-    }
-    
-    // ====== MANEJO DE IMÁGENES ======
-    
-    static preloadImage(src) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = src;
-        });
-    }
-    
-    static lazyLoadImage(img) {
-        if (!img.dataset.src) return;
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.classList.add('loaded');
-                    observer.unobserve(img);
-                }
-            });
-        }, { threshold: 0.1 });
-        
-        observer.observe(img);
-    }
-    
-    static createImagePlaceholder(width, height, color = '#333', text = '') {
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, width, height);
-        
-        if (text) {
-            ctx.fillStyle = '#fff';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, width / 2, height / 2);
-        }
-        
-        return canvas.toDataURL();
-    }
-    
-    // ====== MANEJO DE MEDIA QUERIES ======
-    
-    static getMediaQuery(breakpoint) {
-        const breakpoints = {
-            sm: '(max-width: 640px)',
-            md: '(max-width: 768px)',
-            lg: '(max-width: 1024px)',
-            xl: '(max-width: 1280px)'
-        };
-        
-        return breakpoints[breakpoint] || breakpoint;
-    }
-    
-    static matchMedia(breakpoint) {
-        return window.matchMedia(this.getMediaQuery(breakpoint)).matches;
-    }
-    
-    static onMediaQueryChange(breakpoint, callback) {
-        const mediaQuery = window.matchMedia(this.getMediaQuery(breakpoint));
-        
-        const handler = (event) => callback(event.matches);
-        mediaQuery.addEventListener('change', handler);
-        
-        // Ejecutar callback inicial
-        callback(mediaQuery.matches);
-        
-        return () => mediaQuery.removeEventListener('change', handler);
-    }
-    
-    // ====== MANEJO DE ANIMACIONES ======
-    
-    static animateCSS(element, animation, prefix = 'animate__') {
-        return new Promise((resolve) => {
-            const animationName = `${prefix}${animation}`;
-            
-            element.classList.add(`${prefix}animated`, animationName);
-            
-            function handleAnimationEnd(event) {
-                event.stopPropagation();
-                element.classList.remove(`${prefix}animated`, animationName);
-                resolve('Animation ended');
-            }
-            
-            element.addEventListener('animationend', handleAnimationEnd, { once: true });
-        });
-    }
-    
-    static createRipple(event) {
-        const button = event.currentTarget;
-        const circle = document.createElement('span');
-        const diameter = Math.max(button.clientWidth, button.clientHeight);
-        const radius = diameter / 2;
-        
-        circle.style.width = circle.style.height = `${diameter}px`;
-        circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
-        circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
-        circle.classList.add('ripple');
-        
-        const ripple = button.getElementsByClassName('ripple')[0];
-        if (ripple) {
-            ripple.remove();
-        }
-        
-        button.appendChild(circle);
-    }
-    
-    // ====== MANEJO DE DATOS ======
-    
-    static deepClone(obj) {
-        return JSON.parse(JSON.stringify(obj));
-    }
-    
-    static mergeObjects(...objects) {
-        return objects.reduce((result, current) => {
-            return { ...result, ...current };
-        }, {});
-    }
-    
-    static deepMerge(target, source) {
-        for (const key of Object.keys(source)) {
-            if (source[key] instanceof Object && key in target) {
-                Object.assign(source[key], this.deepMerge(target[key], source[key]));
-            }
-        }
-        
-        Object.assign(target || {}, source);
-        return target;
-    }
-    
-    static filterObject(obj, predicate) {
-        return Object.fromEntries(
-            Object.entries(obj).filter(([key, value]) => predicate(key, value))
-        );
-    }
-    
-    static mapObject(obj, mapper) {
-        return Object.fromEntries(
-            Object.entries(obj).map(([key, value]) => mapper(key, value))
-        );
-    }
-    
-    // ====== MANEJO DE ARRAYS ======
-    
-    static chunkArray(array, size) {
-        const chunks = [];
-        for (let i = 0; i < array.length; i += size) {
-            chunks.push(array.slice(i, i + size));
-        }
-        return chunks;
-    }
-    
-    static shuffleArray(array) {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-    }
-    
-    static uniqueArray(array) {
-        return [...new Set(array)];
-    }
-    
-    static sortBy(array, key, order = 'asc') {
-        return [...array].sort((a, b) => {
-            let aValue = a[key];
-            let bValue = b[key];
-            
-            if (typeof aValue === 'string') {
-                aValue = aValue.toLowerCase();
-                bValue = bValue.toLowerCase();
-            }
-            
-            if (aValue < bValue) return order === 'asc' ? -1 : 1;
-            if (aValue > bValue) return order === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }
-    
-    // ====== MANEJO DE STRINGS ======
-    
-    static truncateString(str, length = 100, suffix = '...') {
-        if (!str) return '';
-        if (str.length <= length) return str;
-        return str.substr(0, length).trim() + suffix;
-    }
-    
-    static capitalizeString(str) {
-        if (!str) return '';
-        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    }
-    
-    static titleCase(str) {
-        if (!str) return '';
-        return str.toLowerCase().split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
-    }
-    
-    static slugify(str) {
-        if (!str) return '';
-        return str
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9\s-]/g, '')
-            .trim()
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
-    }
-    
-    static generateRandomString(length = 10) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    }
-    
-    // ====== MANEJO DE NÚMEROS ======
-    
-    static formatNumber(num, options = {}) {
-        const defaults = {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        };
-        
-        const config = { ...defaults, ...options };
-        
-        if (num === null || num === undefined) return '0';
-        
-        return new Intl.NumberFormat('es-ES', config).format(num);
-    }
-    
-    static formatCurrency(amount, currency = 'USD', locale = 'es-ES') {
-        return new Intl.NumberFormat(locale, {
-            style: 'currency',
-            currency
-        }).format(amount);
-    }
-    
-    static formatPercentage(value, decimals = 1) {
-        return `${value.toFixed(decimals)}%`;
-    }
-    
-    static randomNumber(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-    
-    // ====== MANEJO DE ERRORES ======
-    
-    static handleError(error, context = '') {
-        const errorData = {
-            message: error.message || 'Error desconocido',
-            stack: error.stack,
-            context,
-            timestamp: new Date().toISOString(),
-            url: window.location.href,
-            userAgent: navigator.userAgent
-        };
-        
-        console.error(`Error en ${context}:`, errorData);
-        
-        // Enviar a servicio de tracking si existe
-        if (typeof gtag !== 'undefined') {
-            gtag('event', 'exception', {
-                description: errorData.message,
-                fatal: false
-            });
-        }
-        
-        // Guardar en localStorage para debugging
-        try {
-            const errors = JSON.parse(localStorage.getItem('yshdd-errors') || '[]');
-            errors.push(errorData);
-            if (errors.length > 50) errors.shift();
-            localStorage.setItem('yshdd-errors', JSON.stringify(errors));
-        } catch (e) {
-            // No hacer nada si no se puede guardar
-        }
-        
-        return errorData;
-    }
-    
-    static tryCatch(fn, errorHandler) {
-        try {
-            return fn();
-        } catch (error) {
-            if (errorHandler) {
-                return errorHandler(error);
-            } else {
-                this.handleError(error, 'tryCatch');
-                throw error;
-            }
-        }
-    }
-    
-    static async tryCatchAsync(fn, errorHandler) {
-        try {
-            return await fn();
-        } catch (error) {
-            if (errorHandler) {
-                return errorHandler(error);
-            } else {
-                this.handleError(error, 'tryCatchAsync');
-                throw error;
-            }
-        }
-    }
-    
-    // ====== MANEJO DE PERMISOS ======
-    
-    static async requestPermission(permission) {
-        const permissions = {
-            notifications: () => Notification.requestPermission(),
-            camera: () => navigator.mediaDevices.getUserMedia({ video: true }),
-            microphone: () => navigator.mediaDevices.getUserMedia({ audio: true }),
-            geolocation: () => new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
-            })
-        };
-        
-        const handler = permissions[permission];
-        if (!handler) {
-            throw new Error(`Permiso no soportado: ${permission}`);
-        }
-        
-        try {
-            const result = await handler();
-            return { granted: true, result };
-        } catch (error) {
-            return { granted: false, error: error.message };
-        }
-    }
-    
-    static checkPermission(permission) {
-        const status = {
-            notifications: Notification.permission,
-            camera: 'prompt',
-            microphone: 'prompt',
-            geolocation: 'prompt'
-        };
-        
-        return status[permission] || 'unknown';
-    }
-    
-    // ====== MANEJO DE CONEXIÓN ======
-    
-    static checkConnection() {
-        return {
-            online: navigator.onLine,
-            type: navigator.connection?.effectiveType || 'unknown',
-            downlink: navigator.connection?.downlink || 0,
-            rtt: navigator.connection?.rtt || 0,
-            saveData: navigator.connection?.saveData || false
-        };
-    }
-    
-    static onConnectionChange(callback) {
-        window.addEventListener('online', () => callback(this.checkConnection()));
-        window.addEventListener('offline', () => callback(this.checkConnection()));
-        
-        if (navigator.connection) {
-            navigator.connection.addEventListener('change', () => 
-                callback(this.checkConnection())
-            );
-        }
-        
-        return () => {
-            window.removeEventListener('online', callback);
-            window.removeEventListener('offline', callback);
-            if (navigator.connection) {
-                navigator.connection.removeEventListener('change', callback);
-            }
-        };
-    }
-    
-    // ====== MANEJO DE STORAGE ======
-    
-    static getStorageUsage() {
-        return new Promise((resolve) => {
-            if ('storage' in navigator && 'estimate' in navigator.storage) {
-                navigator.storage.estimate().then(estimate => {
-                    resolve({
-                        used: estimate.usage,
-                        quota: estimate.quota,
-                        percentage: estimate.quota ? 
-                            (estimate.usage / estimate.quota * 100).toFixed(2) : 0
-                    });
-                }).catch(() => resolve(null));
-            } else {
-                resolve(null);
-            }
-        });
-    }
-    
-    static clearCache() {
-        // Limpiar localStorage y sessionStorage
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // Limpiar cookies
-        document.cookie.split(';').forEach(cookie => {
-            const eqPos = cookie.indexOf('=');
-            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-            this.deleteCookie(name);
-        });
-        
-        // Limpiar Service Worker cache
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                registrations.forEach(registration => {
-                    registration.unregister();
-                });
-            });
-        }
-        
-        // Limpiar cache de imágenes
-        if ('caches' in window) {
-            caches.keys().then(cacheNames => {
-                cacheNames.forEach(cacheName => {
-                    caches.delete(cacheName);
-                });
-            });
-        }
-        
-        return true;
-    }
-    
-    // ====== UTILIDADES DE DESARROLLO ======
-    
-    static log(level, message, data = null) {
-        const timestamp = new Date().toISOString();
-        const styles = {
-            info: 'color: #2196F3; font-weight: bold;',
-            success: 'color: #4CAF50; font-weight: bold;',
-            warning: 'color: #FF9800; font-weight: bold;',
-            error: 'color: #F44336; font-weight: bold;',
-            debug: 'color: #9C27B0; font-weight: bold;'
-        };
-        
-        const style = styles[level] || styles.info;
-        
-        console.log(`%c[YSHDD ${level.toUpperCase()}] ${timestamp}`, style, message);
-        if (data) {
-            console.log(data);
-        }
-        
-        // Guardar en localStorage en desarrollo
-        if (window.location.hostname === 'localhost') {
-            const logs = JSON.parse(localStorage.getItem('yshdd-logs') || '[]');
-            logs.push({ level, timestamp, message, data });
-            if (logs.length > 1000) logs.shift();
-            localStorage.setItem('yshdd-logs', JSON.stringify(logs));
-        }
-    }
-    
-    static measurePerformance(name, fn) {
-        const start = performance.now();
-        const result = fn();
-        const end = performance.now();
-        
-        this.log('debug', `${name}: ${(end - start).toFixed(2)}ms`);
-        
-        return result;
-    }
-    
-    static async measureAsyncPerformance(name, fn) {
-        const start = performance.now();
-        const result = await fn();
-        const end = performance.now();
-        
-        this.log('debug', `${name}: ${(end - start).toFixed(2)}ms`);
-        
-        return result;
-    }
-}
+  },
 
-// Exportar funciones estáticas como funciones regulares para compatibilidad
-export const utils = {
-    // Estado
-    setState: Utils.setState,
-    getState: Utils.getState,
-    removeState: Utils.removeState,
-    clearState: Utils.clearState,
-    
-    // Cookies
-    setCookie: Utils.setCookie,
-    getCookie: Utils.getCookie,
-    deleteCookie: Utils.deleteCookie,
-    
-    // URLs
-    updateUrlParams: Utils.updateUrlParams,
-    getUrlParam: Utils.getUrlParam,
-    removeUrlParam: Utils.removeUrlParam,
-    createShareUrl: Utils.createShareUrl,
-    
-    // Archivos
-    readFileAsText: Utils.readFileAsText,
-    readFileAsDataURL: Utils.readFileAsDataURL,
-    downloadTextFile: Utils.downloadTextFile,
-    downloadJSONFile: Utils.downloadJSONFile,
-    
-    // Fechas
-    formatDate: Utils.formatDate,
-    getRelativeTime: Utils.getRelativeTime,
-    formatDuration: Utils.formatDuration,
-    
-    // DOM
-    createElement: Utils.createElement,
-    removeElement: Utils.removeElement,
-    fadeOut: Utils.fadeOut,
-    fadeIn: Utils.fadeIn,
-    toggleElement: Utils.toggleElement,
-    scrollToElement: Utils.scrollToElement,
-    scrollToTop: Utils.scrollToTop,
-    isElementInViewport: Utils.isElementInViewport,
-    
-    // Eventos
-    addGlobalEventListener: Utils.addGlobalEventListener,
-    debounceEvent: Utils.debounceEvent,
-    throttleEvent: Utils.throttleEvent,
-    
-    // Imágenes
-    preloadImage: Utils.preloadImage,
-    lazyLoadImage: Utils.lazyLoadImage,
-    createImagePlaceholder: Utils.createImagePlaceholder,
-    
-    // Media Queries
-    getMediaQuery: Utils.getMediaQuery,
-    matchMedia: Utils.matchMedia,
-    onMediaQueryChange: Utils.onMediaQueryChange,
-    
-    // Animaciones
-    animateCSS: Utils.animateCSS,
-    createRipple: Utils.createRipple,
-    
-    // Datos
-    deepClone: Utils.deepClone,
-    mergeObjects: Utils.mergeObjects,
-    deepMerge: Utils.deepMerge,
-    filterObject: Utils.filterObject,
-    mapObject: Utils.mapObject,
-    
-    // Arrays
-    chunkArray: Utils.chunkArray,
-    shuffleArray: Utils.shuffleArray,
-    uniqueArray: Utils.uniqueArray,
-    sortBy: Utils.sortBy,
-    
-    // Strings
-    truncateString: Utils.truncateString,
-    capitalizeString: Utils.capitalizeString,
-    titleCase: Utils.titleCase,
-    slugify: Utils.slugify,
-    generateRandomString: Utils.generateRandomString,
-    
-    // Números
-    formatNumber: Utils.formatNumber,
-    formatCurrency: Utils.formatCurrency,
-    formatPercentage: Utils.formatPercentage,
-    randomNumber: Utils.randomNumber,
-    
-    // Errores
-    handleError: Utils.handleError,
-    tryCatch: Utils.tryCatch,
-    tryCatchAsync: Utils.tryCatchAsync,
-    
-    // Permisos
-    requestPermission: Utils.requestPermission,
-    checkPermission: Utils.checkPermission,
-    
-    // Conexión
-    checkConnection: Utils.checkConnection,
-    onConnectionChange: Utils.onConnectionChange,
-    
-    // Storage
-    getStorageUsage: Utils.getStorageUsage,
-    clearCache: Utils.clearCache,
-    
-    // Desarrollo
-    log: Utils.log,
-    measurePerformance: Utils.measurePerformance,
-    measureAsyncPerformance: Utils.measureAsyncPerformance
+  remove(key, storage = 'local') {
+    try {
+      const store = storage === 'session' ? sessionStorage : localStorage;
+      store.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  clear(storage = 'local') {
+    try {
+      const store = storage === 'session' ? sessionStorage : localStorage;
+      store.clear();
+      return true;
+    } catch {
+      return false;
+    }
+  },
 };
 
-// Exportar por defecto
-export default utils;
+/* ============================================================================
+   Cookies (opt-in, solo si el proyecto lo requiere)
+   ============================================================================ */
 
-// Inicialización global
-window.YSHDDUtils = utils;
+const Cookies = {
+  set(name, value, days = 365) {
+    if (typeof document === 'undefined') return false;
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires};path=/;SameSite=Strict`;
+    return true;
+  },
+
+  get(name) {
+    if (typeof document === 'undefined') return null;
+    const prefix = `${name}=`;
+    return (
+      document.cookie
+        .split(';')
+        .map((c) => c.trim())
+        .find((c) => c.startsWith(prefix))
+        ?.slice(prefix.length) ?? null
+    );
+  },
+
+  remove(name) {
+    if (typeof document === 'undefined') return false;
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    return true;
+  },
+};
+
+/* ============================================================================
+   URL helpers
+   ============================================================================ */
+
+const URLs = {
+  getParam(key) {
+    return new URL(window.location.href).searchParams.get(key);
+  },
+
+  updateParams(params = {}, replace = true) {
+    const url = new URL(window.location.href);
+    Object.entries(params).forEach(([k, v]) => {
+      if (v == null) url.searchParams.delete(k);
+      else url.searchParams.set(k, v);
+    });
+    (replace ? history.replaceState : history.pushState).call(
+      history, {}, '', url.toString()
+    );
+    return url.toString();
+  },
+
+  removeParam(key) {
+    return URLs.updateParams({ [key]: null });
+  },
+
+  share(params = {}) {
+    const url = new URL(window.location.origin + window.location.pathname);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    return url.toString();
+  },
+};
+
+/* ============================================================================
+   DOM helpers (seguros)
+   ============================================================================ */
+
+const DOM = {
+  $: (sel, ctx = document) => ctx.querySelector(sel),
+  $$: (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel)),
+
+  create(tag, attrs = {}, children = []) {
+    const el = document.createElement(tag);
+    Object.entries(attrs).forEach(([key, value]) => {
+      if (key === 'dataset' && value && typeof value === 'object') {
+        Object.assign(el.dataset, value);
+      } else if (key === 'style' && value && typeof value === 'object') {
+        Object.assign(el.style, value);
+      } else if (key.startsWith('on') && typeof value === 'function') {
+        el.addEventListener(key.slice(2).toLowerCase(), value);
+      } else if (value === true) {
+        el.setAttribute(key, '');
+      } else if (value !== false && value != null) {
+        el.setAttribute(key, String(value));
+      }
+    });
+    (Array.isArray(children) ? children : [children]).forEach((child) => {
+      if (child == null) return;
+      el.appendChild(
+        typeof child === 'string' ? document.createTextNode(child) : child
+      );
+    });
+    return el;
+  },
+
+  remove(el) { el?.parentElement?.removeChild(el); },
+
+  async fadeOut(el, duration = 300) {
+    if (!el) return;
+    if (UTILS.prefersReducedMotion()) { el.remove(); return; }
+    el.style.transition = `opacity ${duration}ms`;
+    el.style.opacity = '0';
+    await new Promise((r) => setTimeout(r, duration));
+    el.remove();
+  },
+
+  async fadeIn(el, duration = 300) {
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.transition = `opacity ${duration}ms`;
+    el.style.display = '';
+    await new Promise((r) => requestAnimationFrame(r));
+    el.style.opacity = '1';
+    await new Promise((r) => setTimeout(r, duration));
+  },
+
+  scrollTo(target, offset = 100, behavior) {
+    const el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+    window.scrollTo({
+      top,
+      behavior: behavior || (UTILS.prefersReducedMotion() ? 'auto' : 'smooth'),
+    });
+  },
+
+  scrollTop(behavior) {
+    window.scrollTo({
+      top: 0,
+      behavior: behavior || (UTILS.prefersReducedMotion() ? 'auto' : 'smooth'),
+    });
+  },
+
+  on(target, event, handler, options = {}) {
+    target?.addEventListener?.(event, handler, options);
+    return () => target?.removeEventListener?.(event, handler, options);
+  },
+
+  delegate(root, selector, event, handler) {
+    const listener = (e) => {
+      const target = e.target.closest(selector);
+      if (target && root.contains(target)) handler(e, target);
+    };
+    root.addEventListener(event, listener);
+    return () => root.removeEventListener(event, listener);
+  },
+};
+
+/* ============================================================================
+   Formato
+   ============================================================================ */
+
+const Format = {
+  date(date, locale = 'es-CO') {
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(locale, {
+      day: 'numeric', month: 'long', year: 'numeric',
+    });
+  },
+
+  relative(date) {
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return '';
+    const diff = Date.now() - d.getTime();
+    const sec = Math.floor(diff / 1000);
+    const min = Math.floor(sec / 60);
+    const hr = Math.floor(min / 60);
+    const day = Math.floor(hr / 24);
+
+    if (day > 30) return Format.date(d);
+    if (day > 0) return `hace ${day} día${day > 1 ? 's' : ''}`;
+    if (hr > 0) return `hace ${hr} hora${hr > 1 ? 's' : ''}`;
+    if (min > 0) return `hace ${min} minuto${min > 1 ? 's' : ''}`;
+    return 'hace unos segundos';
+  },
+
+  duration(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const ss = String(s).padStart(2, '0');
+    return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+  },
+
+  number(n) { return UTILS.formatNumber(n); },
+
+  currency(amount, currency = 'COP', locale = 'es-CO') {
+    try {
+      return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount);
+    } catch {
+      return String(amount);
+    }
+  },
+
+  percent(value, decimals = 1) {
+    if (!Number.isFinite(value)) return '0%';
+    return `${value.toFixed(decimals)}%`;
+  },
+};
+
+/* ============================================================================
+   Strings
+   ============================================================================ */
+
+const Strings = {
+  truncate(str, length = 100, suffix = '…') {
+    if (!str) return '';
+    return str.length <= length ? str : str.slice(0, length).trim() + suffix;
+  },
+  capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  },
+  titleCase(str) {
+    if (!str) return '';
+    return str.toLowerCase().split(/\s+/).map(Strings.capitalize).join(' ');
+  },
+  slugify(str) {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  },
+  random(length = 10) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let out = '';
+    for (let i = 0; i < length; i += 1) {
+      out += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return out;
+  },
+};
+
+/* ============================================================================
+   Arrays
+   ============================================================================ */
+
+const Arrays = {
+  chunk(arr, size) {
+    const out = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  },
+  shuffle(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  },
+  unique(arr) { return [...new Set(arr)]; },
+  sortBy(arr, key, order = 'asc') {
+    return [...arr].sort((a, b) => {
+      const av = a?.[key];
+      const bv = b?.[key];
+      if (av === bv) return 0;
+      const cmp = av < bv ? -1 : 1;
+      return order === 'asc' ? cmp : -cmp;
+    });
+  },
+};
+
+/* ============================================================================
+   Objetos
+   ============================================================================ */
+
+const Objects = {
+  clone(obj) { return JSON.parse(JSON.stringify(obj)); },
+  merge(...objs) { return Object.assign({}, ...objs); },
+  filter(obj, pred) {
+    return Object.fromEntries(Object.entries(obj).filter(([k, v]) => pred(k, v)));
+  },
+  map(obj, fn) {
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => fn(k, v)));
+  },
+};
+
+/* ============================================================================
+   Timing
+   ============================================================================ */
+
+const Timing = {
+  debounce(fn, wait = 200, immediate = false) {
+    let timer = null;
+    return function debounced(...args) {
+      const ctx = this;
+      const later = () => {
+        timer = null;
+        if (!immediate) fn.apply(ctx, args);
+      };
+      const callNow = immediate && !timer;
+      clearTimeout(timer);
+      timer = setTimeout(later, wait);
+      if (callNow) fn.apply(ctx, args);
+    };
+  },
+  throttle(fn, limit = 200) {
+    let lock = false;
+    return function throttled(...args) {
+      if (lock) return;
+      fn.apply(this, args);
+      lock = true;
+      setTimeout(() => (lock = false), limit);
+    };
+  },
+  sleep(ms) { return new Promise((r) => setTimeout(r, ms)); },
+};
+
+/* ============================================================================
+   Archivos y descargas
+   ============================================================================ */
+
+const Files = {
+  readAsText(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = (e) => resolve(e.target?.result ?? '');
+      r.onerror = reject;
+      r.readAsText(file);
+    });
+  },
+  readAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = (e) => resolve(e.target?.result ?? '');
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  },
+  downloadText(content, filename, type = 'text/plain') {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 100);
+  },
+  downloadJSON(data, filename) {
+    Files.downloadText(JSON.stringify(data, null, 2), filename, 'application/json');
+  },
+};
+
+/* ============================================================================
+   Media queries
+   ============================================================================ */
+
+const Media = {
+  query(bp) {
+    const map = {
+      sm: `(max-width: ${CONSTANTS.BREAKPOINTS.SM}px)`,
+      md: `(max-width: ${CONSTANTS.BREAKPOINTS.MD}px)`,
+      lg: `(max-width: ${CONSTANTS.BREAKPOINTS.LG}px)`,
+      xl: `(max-width: ${CONSTANTS.BREAKPOINTS.XL}px)`,
+    };
+    return map[bp] || bp;
+  },
+  matches(bp) {
+    return window.matchMedia(Media.query(bp)).matches;
+  },
+  onChange(bp, cb) {
+    const mql = window.matchMedia(Media.query(bp));
+    const handler = (e) => cb(e.matches);
+    mql.addEventListener?.('change', handler);
+    cb(mql.matches);
+    return () => mql.removeEventListener?.('change', handler);
+  },
+};
+
+/* ============================================================================
+   Conexión / storage
+   ============================================================================ */
+
+const Env = {
+  connection() {
+    const c = navigator.connection || {};
+    return {
+      online: navigator.onLine,
+      effectiveType: c.effectiveType || 'unknown',
+      downlink: c.downlink || 0,
+      rtt: c.rtt || 0,
+      saveData: Boolean(c.saveData),
+    };
+  },
+
+  onConnectionChange(cb) {
+    const handler = () => cb(Env.connection());
+    window.addEventListener('online', handler);
+    window.addEventListener('offline', handler);
+    navigator.connection?.addEventListener?.('change', handler);
+    return () => {
+      window.removeEventListener('online', handler);
+      window.removeEventListener('offline', handler);
+      navigator.connection?.removeEventListener?.('change', handler);
+    };
+  },
+
+  async storageInfo() { return UTILS.getStorageInfo(); },
+};
+
+/* ============================================================================
+   Logger / errores
+   ============================================================================ */
+
+const Log = {
+  info: (...a) => console.info('[YSHDD]', ...a),
+  warn: (...a) => console.warn('[YSHDD]', ...a),
+  error: (...a) => console.error('[YSHDD]', ...a),
+  debug: (...a) => {
+    if (window.location.hostname === 'localhost'
+      || window.location.hostname === '127.0.0.1') {
+      console.debug('[YSHDD:debug]', ...a);
+    }
+  },
+};
+
+const Errors = {
+  handle(error, context = 'general') {
+    const payload = {
+      message: error?.message || String(error),
+      context,
+      stack: error?.stack || null,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+    };
+    Log.error('Error en', context, payload);
+    if (window.YSHDD?.emit) window.YSHDD.emit('error', payload);
+    return payload;
+  },
+
+  async tryCatchAsync(fn, context = 'async') {
+    try { return await fn(); }
+    catch (e) { Errors.handle(e, context); return null; }
+  },
+
+  tryCatch(fn, context = 'sync') {
+    try { return fn(); }
+    catch (e) { Errors.handle(e, context); return null; }
+  },
+};
+
+/* ============================================================================
+   API pública (objeto único)
+   ============================================================================ */
+
+export const U = {
+  Storage,
+  Cookies,
+  URLs,
+  DOM,
+  Format,
+  Strings,
+  Arrays,
+  Objects,
+  Timing,
+  Files,
+  Media,
+  Env,
+  Log,
+  Errors,
+  // Reexport de config
+  CONFIG,
+  CONSTANTS,
+  UTILS,
+  Validators,
+  AppError,
+};
+
+export default U;
+
+/* ============================================================================
+   Auto-bind
+   ============================================================================ */
+
+if (typeof window !== 'undefined') {
+  const bind = () => {
+    window.YSHDDUtils = U;
+    if (window.YSHDD?.state) {
+      window.YSHDD.state.modules = window.YSHDD.state.modules || {};
+      window.YSHDD.state.modules.utils = U;
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind, { once: true });
+  } else {
+    bind();
+  }
+}
