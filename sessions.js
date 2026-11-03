@@ -1,325 +1,600 @@
-// assets/js/modules/sessions.js
+/**
+ * ============================================================================
+ * sessions.js — YSHDD EPK Premium 2027
+ * Módulo de "Sesiones" (live, acústicas, estudio, behind-the-scenes).
+ *
+ * Reglas del proyecto:
+ * - 100% estático, sin backend. No hay rutas fantasma.
+ * - Solo usa las imágenes REALES del repo.
+ * - DOM generado con textContent / createElement (sin innerHTML peligroso).
+ * - Integra YSHDD.notify() si está disponible.
+ * - Accesible (WCAG 2.2 AA): <time datetime>, alt descriptivos, aria-*.
+ * - Idempotente: puede importarse varias veces sin duplicar handlers.
+ *
+ * Contrato esperado del HTML (index.html v3):
+ *   #sessions                       (sección, ya existe)
+ *   .sessions-grid                  (opcional, se rellena si está vacío)
+ *   .upcoming-grid                  (opcional)
+ *   #live-tab .sessions-grid        (opcional)
+ *   #acoustic-tab .acoustic-tracks  (opcional)
+ * Si ninguno existe, el módulo simplemente expone datos en YSHDD.state.
+ * ============================================================================
+ */
+
+'use strict';
+
+import { CONFIG, CONSTANTS, UTILS } from './config.js';
+
+/* ============================================================================
+   Datos REALES del repo
+   ----------------------------------------------------------------------------
+   No inventar rutas. Solo se usan los archivos existentes.
+   Las sesiones de estudio acústicas usan las portadas visuales reales.
+   ============================================================================ */
+
+const REAL_IMAGES = {
+  portrait:      'YSHDD.png',
+  crisisCover:   'CRISIS.png',
+  crisisVisual:  'crisis-v.png',
+  quienSoy:      'Quien_soy_yo.png',
+  vidaNueva:     'VIDA-NUEVA.png',
+  valorLegado:   'EL%20VALOR%20DEL%20LEGADO.png',
+  callesDeOro:   'CALLES%20DE%20ORO%20(INS).png',
+  contraDiablo:  'CONTRA%20EL%20DIABLO.png',
+  elDon:         'EL%20DON.png',
+  jordan23:      'JORDAN%2023.png',
+  nuestroJuez:   'NUESTRO%20JUEZ.png',
+  noMasCritica:  'No%20M%C3%A1s%20Cr%C3%ADtica%20(INS).png',
+  soldadoDelRey: 'SOLDADO%20DEL%20REY.png',
+  jheyDae:       'JHEY-DAE.png',
+};
+
+const YOUTUBE_CRISIS = CONFIG?.external?.youtubeVideoCRISIS || 'https://youtu.be/naMGlK1ozFc';
+
+/* ============================================================================
+   Modelo de datos
+   ----------------------------------------------------------------------------
+   Todo lo que aparece aquí representa contenido real o claramente neutro.
+   Lo que no está confirmado se marca como "Por confirmar".
+   ============================================================================ */
+
+const LIVE_SESSIONS = [
+  {
+    id: 'live-crisis',
+    title: 'Sesión de grabación · CRISIS',
+    description:
+      'Registro en estudio del álbum debut CRISIS (5 tracks, 16:06).',
+    thumbnail: REAL_IMAGES.crisisVisual,
+    alt: 'Visual del álbum CRISIS de YSHDD usado en la sesión de grabación',
+    duration: '16:06',
+    date: '2025',
+    location: 'Cali, Colombia',
+    tags: ['estudio', 'álbum'],
+    videoId: 'naMGlK1ozFc',
+    videoUrl: YOUTUBE_CRISIS,
+  },
+  {
+    id: 'live-legado',
+    title: 'El Valor del Legado',
+    description:
+      'Sesión enfocada en el track "El Valor del Legado". Disponible en audio oficial.',
+    thumbnail: REAL_IMAGES.valorLegado,
+    alt: 'Portada del sencillo El Valor del Legado de YSHDD',
+    duration: '—',
+    date: '2025',
+    location: 'Cali, Colombia',
+    tags: ['audio', 'estudio'],
+    videoId: null,
+    videoUrl: null,
+  },
+];
+
+const ACOUSTIC_SESSIONS = [
+  {
+    id: 'acoustic-1',
+    title: 'Sesión Acústica · Selección CRISIS',
+    description:
+      'Versiones acústicas de selección del álbum CRISIS (contenido por confirmar).',
+    thumbnail: REAL_IMAGES.crisisCover,
+    alt: 'Portada del álbum CRISIS de YSHDD',
+    date: '2025',
+    tracks: [
+      { title: '¿Quién Soy? (Acústico)', duration: 'Por confirmar' },
+      { title: 'CRISIS (Acústico)', duration: 'Por confirmar' },
+    ],
+  },
+];
+
+const UPCOMING_SESSIONS = [
+  // DATO REAL REQUERIDO: fechas confirmadas de sesiones o presentaciones.
+  // Se deja un placeholder neutro, no una fecha falsa.
+  {
+    id: 'upcoming-1',
+    title: 'Sesión por confirmar',
+    description:
+      'Estamos preparando nuevas sesiones. Escríbenos para proponer una colaboración o cobertura.',
+    date: null,
+    time: null,
+    location: 'Por confirmar',
+    type: 'TBD',
+  },
+];
+
+/* ============================================================================
+   Clase Sessions
+   ============================================================================ */
+
 export class Sessions {
-    constructor() {
-        this.sessions = {
-            live: [],
-            acoustic: [],
-            studio: [],
-            behind: []
-        };
-        this.upcomingSessions = [];
-        this.init();
+  constructor(options = {}) {
+    this.options = {
+      autoMount: true,
+      ...options,
+    };
+
+    this.data = {
+      live: [...LIVE_SESSIONS],
+      acoustic: [...ACOUSTIC_SESSIONS],
+      upcoming: [...UPCOMING_SESSIONS],
+    };
+
+    this._handlers = [];
+    this._bound = false;
+
+    if (this.options.autoMount) this.init();
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* Init                                                                     */
+  /* ------------------------------------------------------------------------ */
+
+  init() {
+    if (this._bound) return;
+    this._bound = true;
+
+    this.renderLiveSessions();
+    this.renderAcousticSessions();
+    this.renderUpcomingSessions();
+    this.setupEventListeners();
+
+    if (window.YSHDD?.state) {
+      window.YSHDD.state.modules = window.YSHDD.state.modules || {};
+      window.YSHDD.state.modules.sessions = this;
+      window.YSHDD.state.modules.sesiones = this;
+    }
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* Render: Live Sessions                                                    */
+  /* ------------------------------------------------------------------------ */
+
+  renderLiveSessions() {
+    const container =
+      document.querySelector('#live-tab .sessions-grid') ||
+      document.querySelector('#sessions .sessions-grid');
+
+    if (!container) return;
+
+    // No sobreescribir contenido si ya hay elementos (SEO-friendly)
+    if (container.children.length > 0) return;
+
+    const frag = document.createDocumentFragment();
+    this.data.live.forEach((session) => {
+      frag.appendChild(this.createSessionCard(session));
+    });
+    container.appendChild(frag);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* Render: Acoustic Sessions                                                */
+  /* ------------------------------------------------------------------------ */
+
+  renderAcousticSessions() {
+    const container = document.querySelector('#acoustic-tab .acoustic-tracks');
+    if (!container || container.children.length > 0) return;
+
+    const session = this.data.acoustic[0];
+    if (!session) return;
+
+    const frag = document.createDocumentFragment();
+    session.tracks.forEach((track, index) => {
+      frag.appendChild(this.createTrackElement(track, index === 0, session.id));
+    });
+    container.appendChild(frag);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* Render: Upcoming Sessions                                                */
+  /* ------------------------------------------------------------------------ */
+
+  renderUpcomingSessions() {
+    const container = document.querySelector('.upcoming-grid');
+    if (!container || container.children.length > 0) return;
+
+    const frag = document.createDocumentFragment();
+    this.data.upcoming.forEach((session) => {
+      frag.appendChild(this.createUpcomingCard(session));
+    });
+    container.appendChild(frag);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* Factories                                                                */
+  /* ------------------------------------------------------------------------ */
+
+  createSessionCard(session) {
+    const card = document.createElement('article');
+    card.className = 'session-card';
+    card.dataset.sessionId = session.id;
+
+    // Media
+    const media = document.createElement('div');
+    media.className = 'session-media';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'session-thumbnail';
+
+    const img = document.createElement('img');
+    img.src = session.thumbnail;
+    img.alt = session.alt || session.title;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.width = 800;
+    img.height = 450;
+    thumb.appendChild(img);
+
+    if (session.videoId) {
+      const overlay = document.createElement('div');
+      overlay.className = 'session-overlay';
+
+      const playBtn = document.createElement('button');
+      playBtn.type = 'button';
+      playBtn.className = 'play-session';
+      playBtn.dataset.videoId = session.videoId;
+      playBtn.setAttribute('aria-label', `Reproducir ${session.title}`);
+      playBtn.innerHTML = '<i class="bx bx-play-circle" aria-hidden="true"></i>';
+
+      overlay.appendChild(playBtn);
+      thumb.appendChild(overlay);
+    }
+    media.appendChild(thumb);
+
+    // Tags
+    if (Array.isArray(session.tags) && session.tags.length) {
+      const tagsWrap = document.createElement('div');
+      tagsWrap.className = 'session-tags';
+      session.tags.forEach((tag) => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = tag;
+        tagsWrap.appendChild(span);
+      });
+      media.appendChild(tagsWrap);
     }
 
-    async init() {
-        await this.loadSessions();
-        await this.loadUpcomingSessions();
-        this.setupEventListeners();
+    // Info
+    const info = document.createElement('div');
+    info.className = 'session-info';
+
+    const title = document.createElement('h3');
+    title.className = 'session-title';
+    title.textContent = session.title;
+
+    const desc = document.createElement('p');
+    desc.className = 'session-description';
+    desc.textContent = session.description;
+
+    const meta = document.createElement('div');
+    meta.className = 'session-meta';
+
+    if (session.date) {
+      const t = document.createElement('time');
+      // Acepta año o fecha ISO
+      t.dateTime = /^\d{4}$/.test(session.date)
+        ? `${session.date}`
+        : session.date;
+      t.innerHTML = `<i class="bx bx-calendar" aria-hidden="true"></i> ${UTILS.formatDate(
+        /^\d{4}$/.test(session.date) ? `${session.date}-01-01` : session.date
+      )}`;
+      meta.appendChild(t);
     }
 
-    async loadSessions() {
-        try {
-            // Datos de ejemplo
-            this.sessions = {
-                live: [
-                    {
-                        id: 1,
-                        title: "Festival Juventud 2024",
-                        description: "Presentación completa en festival nacional. Setlist de 30 minutos.",
-                        thumbnail: "assets/images/sessions/live1.jpg",
-                        duration: "30:00",
-                        date: "2024-10-15",
-                        location: "Bogotá, Colombia",
-                        attendees: 500,
-                        tags: ["en vivo", "festival"],
-                        videoUrl: "https://youtube.com/embed/..."
-                    },
-                    {
-                        id: 2,
-                        title: "Sesión Iglesia Local",
-                        description: "Presentación íntima para comunidad juvenil.",
-                        thumbnail: "assets/images/sessions/live2.jpg",
-                        duration: "45:00",
-                        date: "2024-08-20",
-                        location: "Cali, Colombia",
-                        tags: ["iglesia", "acústico"],
-                        videoUrl: "https://youtube.com/embed/..."
-                    }
-                ],
-                acoustic: [
-                    {
-                        id: 3,
-                        title: "Sesión Acústica #1",
-                        description: "Versiones acústicas de los éxitos más populares.",
-                        thumbnail: "assets/images/sessions/acoustic.jpg",
-                        date: "2024-12-10",
-                        tracks: [
-                            { title: "¿Quién Soy? (Acústico)", duration: "3:45" },
-                            { title: "CRISIS (Acústico)", duration: "4:20" }
-                        ]
-                    }
-                ],
-                studio: [
-                    // Sesiones en estudio
-                ],
-                behind: [
-                    // Behind the scenes
-                ]
-            };
-            
-            this.renderSessions();
-            
-        } catch (error) {
-            console.error('Error cargando sesiones:', error);
-            throw error;
-        }
+    if (session.duration) {
+      const dur = document.createElement('span');
+      dur.innerHTML = `<i class="bx bx-time" aria-hidden="true"></i> ${session.duration}`;
+      meta.appendChild(dur);
     }
 
-    async loadUpcomingSessions() {
-        try {
-            this.upcomingSessions = [
-                {
-                    id: 1,
-                    title: "Sesión en Vivo - Radio XYZ",
-                    description: "Entrevista y performance en directo",
-                    date: "2025-03-15",
-                    time: "16:00",
-                    location: "Bogotá",
-                    type: "radio"
-                },
-                {
-                    id: 2,
-                    title: "Acústico Especial",
-                    description: "Sesión exclusiva para plataforma streaming",
-                    date: "2025-04-10",
-                    type: "streaming"
-                }
-            ];
-            
-            this.renderUpcomingSessions();
-            
-        } catch (error) {
-            console.error('Error cargando próximas sesiones:', error);
-        }
+    if (session.location) {
+      const loc = document.createElement('span');
+      loc.innerHTML = `<i class="bx bx-map" aria-hidden="true"></i> ${session.location}`;
+      meta.appendChild(loc);
     }
 
-    renderSessions() {
-        this.renderLiveSessions();
-        this.renderAcousticSessions();
+    info.append(title, desc, meta);
+
+    card.append(media, info);
+    return card;
+  }
+
+  createTrackElement(track, isActive = false, sessionId) {
+    const row = document.createElement('div');
+    row.className = `track-item ${isActive ? 'active' : ''}`;
+    row.dataset.sessionId = sessionId || '';
+
+    const info = document.createElement('div');
+    info.className = 'track-info';
+
+    const h4 = document.createElement('h4');
+    h4.textContent = track.title;
+
+    const p = document.createElement('p');
+    p.textContent = track.duration || '—';
+
+    info.append(h4, p);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'track-play';
+    btn.dataset.track = track.title;
+    btn.setAttribute('aria-label', `Reproducir ${track.title}`);
+    btn.innerHTML = '<i class="bx bx-play" aria-hidden="true"></i>';
+
+    row.append(info, btn);
+    return row;
+  }
+
+  createUpcomingCard(session) {
+    const card = document.createElement('article');
+    card.className = 'upcoming-card';
+
+    // Fecha
+    const dateWrap = document.createElement('div');
+    dateWrap.className = 'upcoming-date';
+
+    const date = session.date ? new Date(session.date) : null;
+    const day = date ? date.getDate() : '—';
+    const month = date
+      ? date.toLocaleString('es', { month: 'short' }).toUpperCase()
+      : 'PRÓX';
+
+    const dayEl = document.createElement('span');
+    dayEl.className = 'date-day';
+    dayEl.textContent = String(day);
+
+    const monthEl = document.createElement('span');
+    monthEl.className = 'date-month';
+    monthEl.textContent = month;
+
+    dateWrap.append(dayEl, monthEl);
+
+    // Info
+    const info = document.createElement('div');
+    info.className = 'upcoming-info';
+
+    const h4 = document.createElement('h4');
+    h4.textContent = session.title;
+
+    const p = document.createElement('p');
+    p.textContent = session.description;
+
+    const details = document.createElement('div');
+    details.className = 'upcoming-details';
+
+    if (session.time) {
+      const t = document.createElement('span');
+      t.innerHTML = `<i class="bx bx-time" aria-hidden="true"></i> ${session.time}`;
+      details.appendChild(t);
+    }
+    if (session.location) {
+      const l = document.createElement('span');
+      l.innerHTML = `<i class="bx bx-map" aria-hidden="true"></i> ${session.location}`;
+      details.appendChild(l);
     }
 
-    renderLiveSessions() {
-        const container = document.querySelector('#live-tab .sessions-grid');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        this.sessions.live.forEach(session => {
-            const card = this.createSessionCard(session);
-            container.appendChild(card);
-        });
+    info.append(h4, p, details);
+
+    // Botón
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-outline btn-sm';
+    btn.dataset.sessionId = session.id;
+    btn.textContent = session.date ? 'Recordar' : 'Consultar';
+    btn.setAttribute(
+      'aria-label',
+      session.date ? `Recordar ${session.title}` : `Consultar ${session.title}`
+    );
+
+    card.append(dateWrap, info, btn);
+    return card;
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* Eventos                                                                  */
+  /* ------------------------------------------------------------------------ */
+
+  setupEventListeners() {
+    const onClick = (e) => {
+      // Reproducir sesión (iframe del video)
+      const playBtn = e.target.closest('.play-session');
+      if (playBtn) {
+        const videoId = playBtn.getAttribute('data-video-id');
+        if (videoId) this.playSession(videoId);
+        return;
+      }
+
+      // Track acústico
+      const trackBtn = e.target.closest('.track-play');
+      if (trackBtn) {
+        this.playTrack(trackBtn.getAttribute('data-track') || '');
+        return;
+      }
+
+      // Recordar sesión
+      const rememberBtn = e.target.closest('.upcoming-card [data-session-id], .upcoming-card .btn');
+      if (rememberBtn && rememberBtn.classList.contains('btn')) {
+        const id = rememberBtn.getAttribute('data-session-id');
+        if (id) this.rememberSession(id);
+      }
+    };
+
+    document.addEventListener('click', onClick);
+    this._handlers.push(() => document.removeEventListener('click', onClick));
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /* Acciones                                                                 */
+  /* ------------------------------------------------------------------------ */
+
+  playSession(videoId) {
+    // Preferimos delegación al modal global si existe
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoIframe');
+
+    if (modal && iframe) {
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+      modal.hidden = false;
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      return;
     }
 
-    renderAcousticSessions() {
-        const container = document.querySelector('#acoustic-tab .acoustic-tracks');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        this.sessions.acoustic[0]?.tracks.forEach((track, index) => {
-            const trackElement = this.createTrackElement(track, index === 0);
-            container.appendChild(trackElement);
-        });
+    // Fallback: abrir en nueva pestaña
+    window.open(
+      `https://www.youtube-nocookie.com/embed/${videoId}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
+  playTrack(trackTitle) {
+    if (!trackTitle) return;
+    if (window.YSHDD?.notify) {
+      window.YSHDD.notify(
+        `Reproducción de "${trackTitle}" por confirmar.`,
+        'info'
+      );
+    } else {
+      console.log(`[sessions] ${trackTitle}`);
+    }
+  }
+
+  rememberSession(sessionId) {
+    const session =
+      this.data.upcoming.find((s) => s.id === sessionId) ||
+      this.data.live.find((s) => s.id === sessionId);
+
+    if (!session) return;
+
+    // Sin backend: si no hay fecha real, derivamos a mailto.
+    if (!session.date) {
+      const email = CONFIG.artist?.booking?.email || 'yshddoficial@gmail.com';
+      const subject = encodeURIComponent(
+        `Consulta sesión · ${session.title}`
+      );
+      window.location.href = `mailto:${email}?subject=${subject}`;
+      return;
     }
 
-    renderUpcomingSessions() {
-        const container = document.querySelector('.upcoming-grid');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        this.upcomingSessions.forEach(session => {
-            const card = this.createUpcomingCard(session);
-            container.appendChild(card);
-        });
-    }
+    // Con fecha real: ofrecer descarga .ics
+    try {
+      const ics = this.buildICS(session);
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `yshdd-${session.id}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        a.remove();
+        URL.revokeObjectURL(url);
+      }, 100);
 
-    createSessionCard(session) {
-        const div = document.createElement('div');
-        div.className = 'session-card';
-        div.innerHTML = `
-            <div class="session-media">
-                <div class="session-thumbnail">
-                    <img src="${session.thumbnail}" alt="${session.title}" loading="lazy">
-                    <div class="session-overlay">
-                        <button class="play-session" data-session-id="${session.id}">
-                            <i class='bx bx-play-circle'></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="session-tags">
-                    ${session.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                </div>
-            </div>
-            <div class="session-info">
-                <h3 class="session-title">${session.title}</h3>
-                <p class="session-description">${session.description}</p>
-                <div class="session-meta">
-                    <span><i class='bx bx-calendar'></i> ${this.formatDate(session.date)}</span>
-                    <span><i class='bx bx-time'></i> ${session.duration}</span>
-                    ${session.attendees ? `<span><i class='bx bx-user'></i> ${session.attendees}+ asistentes</span>` : ''}
-                    ${session.location ? `<span><i class='bx bx-map'></i> ${session.location}</span>` : ''}
-                </div>
-            </div>
-        `;
-        
-        return div;
+      if (window.YSHDD?.notify) {
+        window.YSHDD.notify('Evento agregado al calendario.', 'success');
+      }
+    } catch {
+      if (window.YSHDD?.notify) {
+        window.YSHDD.notify('No se pudo agregar al calendario.', 'warning');
+      }
     }
+  }
 
-    createTrackElement(track, isActive = false) {
-        const div = document.createElement('div');
-        div.className = `track-item ${isActive ? 'active' : ''}`;
-        div.innerHTML = `
-            <div class="track-info">
-                <h4>${track.title}</h4>
-                <p>${track.duration}</p>
-            </div>
-            <button class="track-play" data-track="${track.title}">
-                <i class='bx bx-play'></i>
-            </button>
-        `;
-        
-        return div;
-    }
+  buildICS(session) {
+    const start = new Date(
+      `${session.date}T${session.time || '12:00'}:00`
+    ).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const end = new Date(
+      new Date(`${session.date}T${session.time || '12:00'}:00`).getTime() +
+        60 * 60 * 1000
+    ).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
-    createUpcomingCard(session) {
-        const date = new Date(session.date);
-        const day = date.getDate();
-        const month = date.toLocaleString('es', { month: 'short' }).toUpperCase();
-        
-        const div = document.createElement('div');
-        div.className = 'upcoming-card';
-        div.innerHTML = `
-            <div class="upcoming-date">
-                <span class="date-day">${day}</span>
-                <span class="date-month">${month}</span>
-            </div>
-            <div class="upcoming-info">
-                <h4>${session.title}</h4>
-                <p>${session.description}</p>
-                <div class="upcoming-details">
-                    ${session.time ? `<span><i class='bx bx-time'></i> ${session.time}</span>` : ''}
-                    ${session.location ? `<span><i class='bx bx-map'></i> ${session.location}</span>` : ''}
-                </div>
-            </div>
-            <button class="btn btn-outline btn-small" data-session-id="${session.id}">
-                Recordar
-            </button>
-        `;
-        
-        return div;
-    }
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//YSHDD EPK//ES',
+      'BEGIN:VEVENT',
+      `UID:${session.id}@yshdd.netlify.app`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTSTART:${start}`,
+      `DTEND:${end}`,
+      `SUMMARY:YSHDD — ${session.title}`,
+      `DESCRIPTION:${(session.description || '').replace(/\n/g, ' ')}`,
+      `LOCATION:${session.location || 'Por confirmar'}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+  }
 
-    setupEventListeners() {
-        // Play session
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.play-session')) {
-                const button = e.target.closest('.play-session');
-                const sessionId = button.getAttribute('data-session-id');
-                this.playSession(sessionId);
-            }
-            
-            if (e.target.closest('.track-play')) {
-                const button = e.target.closest('.track-play');
-                const trackTitle = button.getAttribute('data-track');
-                this.playTrack(trackTitle);
-            }
-            
-            // Recordar sesión
-            if (e.target.closest('[data-session-id]') && e.target.closest('.btn')) {
-                const button = e.target.closest('[data-session-id]');
-                const sessionId = button.getAttribute('data-session-id');
-                this.rememberSession(sessionId);
-            }
-        });
-    }
+  /* ------------------------------------------------------------------------ */
+  /* API                                                                      */
+  /* ------------------------------------------------------------------------ */
 
-    playSession(sessionId) {
-        const session = this.sessions.live.find(s => s.id == sessionId);
-        if (!session || !session.videoUrl) return;
-        
-        // En un caso real, esto abriría el video en un modal
-        window.open(session.videoUrl, '_blank');
-        
-        // Track event
-        if (window.YSHDD && window.YSHDD.modules.analytics) {
-            window.YSHDD.modules.analytics.trackEvent('sessions', 'play', session.title);
-        }
-    }
+  getStats() {
+    return {
+      totalLive: this.data.live.length,
+      totalAcoustic: this.data.acoustic.length,
+      totalUpcoming: this.data.upcoming.length,
+      totalTracks: this.data.acoustic.reduce(
+        (n, s) => n + (s.tracks?.length || 0),
+        0
+      ),
+    };
+  }
 
-    playTrack(trackTitle) {
-        // Simulación de reproducción de track acústico
-        console.log('Reproduciendo:', trackTitle);
-        
-        if (window.YSHDD && window.YSHDD.modules.notifications) {
-            window.YSHDD.modules.notifications.show(
-                `Reproduciendo: ${trackTitle}`,
-                'success'
-            );
-        }
+  destroy() {
+    this._handlers.forEach((fn) => fn());
+    this._handlers = [];
+    this._bound = false;
+    if (window.YSHDD?.state?.modules) {
+      delete window.YSHDD.state.modules.sessions;
+      delete window.YSHDD.state.modules.sesiones;
     }
+  }
+}
 
-    rememberSession(sessionId) {
-        const session = this.upcomingSessions.find(s => s.id == sessionId);
-        if (!session) return;
-        
-        // Guardar en localStorage
-        const remembered = JSON.parse(localStorage.getItem('yshdd-remembered-sessions') || '[]');
-        if (!remembered.includes(sessionId)) {
-            remembered.push(sessionId);
-            localStorage.setItem('yshdd-remembered-sessions', JSON.stringify(remembered));
-            
-            // Agregar a calendario (simulación)
-            this.addToCalendar(session);
-        }
-    }
+/* ============================================================================
+   Singleton + auto-bind
+   ============================================================================ */
 
-    addToCalendar(session) {
-        // Simulación de agregar a calendario
-        const event = {
-            title: `YSHDD: ${session.title}`,
-            description: session.description,
-            start: new Date(session.date + (session.time ? `T${session.time}` : '')),
-            end: new Date(new Date(session.date + (session.time ? `T${session.time}` : '')).getTime() + 60 * 60 * 1000), // +1 hora
-            location: session.location || 'Online'
-        };
-        
-        console.log('Evento agregado a calendario:', event);
-        
-        if (window.YSHDD && window.YSHDD.modules.notifications) {
-            window.YSHDD.modules.notifications.show(
-                `Sesión "${session.title}" recordada`,
-                'success'
-            );
-        }
-    }
+let instance = null;
 
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    }
+export function getSessions() {
+  if (!instance) instance = new Sessions();
+  return instance;
+}
 
-    getStats() {
-        return {
-            totalLive: this.sessions.live.length,
-            totalAcoustic: this.sessions.acoustic.length,
-            totalUpcoming: this.upcomingSessions.length,
-            totalTracks: this.sessions.acoustic.reduce((total, session) => 
-                total + (session.tracks?.length || 0), 0)
-        };
-    }
+export default getSessions;
+
+if (typeof window !== 'undefined') {
+  const bind = () => {
+    const sessions = getSessions();
+    window.YSHDDSessions = sessions;
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind, { once: true });
+  } else {
+    bind();
+  }
 }
