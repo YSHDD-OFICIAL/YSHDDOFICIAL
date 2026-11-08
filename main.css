@@ -2055,6 +2055,151 @@ html[data-theme="light"] .site-header.scrolled {
 .presskit-list span { font-weight: 600; }
 
 /* ============================================================================
+   42. TIENDA
+   ============================================================================ */
+
+.section-tienda {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 221, 87, 0.03) 100%);
+}
+
+.tienda-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-lg);
+  margin-block-end: var(--space-xl);
+}
+
+.tienda-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.tienda-card:hover,
+.tienda-card:focus-within {
+  border-color: var(--color-primary);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.tienda-card figure {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #000;
+}
+
+.tienda-card img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.tienda-card:hover img,
+.tienda-card:focus-within img {
+  transform: scale(1.05);
+}
+
+.tienda-tag {
+  position: absolute;
+  inset-block-start: var(--space-sm);
+  inset-inline-start: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-primary);
+  color: var(--color-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.tienda-card-body {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  flex: 1;
+}
+
+.tienda-card-body h3 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.tienda-desc {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.tienda-price {
+  font-family: var(--font-accent);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.tienda-card-body .btn {
+  margin-block-start: auto;
+  inline-size: 100%;
+}
+
+.tienda-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  max-inline-size: 800px;
+  margin-inline: auto;
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(255, 221, 87, 0.06);
+  border: 1px solid rgba(255, 221, 87, 0.25);
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.tienda-notice i {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-block-start: 2px;
+}
+
+/* Responsive fino (el grid ya es auto-fit) */
+@media (max-width: 480px) {
+  .tienda-card-body { padding: var(--space-md); }
+  .tienda-card-body h3 { font-size: 1.05rem; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .tienda-card,
+  .tienda-card img { transition: none; }
+  .tienda-card:hover,
+  .tienda-card:focus-within { transform: none; }
+  .tienda-card:hover img,
+  .tienda-card:focus-within img { transform: none; }
+}
+
+/* Print */
+@media print {
+  .section-tienda { display: none !important; }
+}
+
+/* ============================================================================
    25. SERVICIOS
    ============================================================================ */
 
